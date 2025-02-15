@@ -1,4 +1,6 @@
-
+// Importando o Firebase corretamente pelo CDN
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
 
 
 
