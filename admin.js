@@ -28,7 +28,7 @@ const db = getFirestore(app);
 // Função para carregar registros corretamente
 async function carregarRegistros() {
   try {
-    const querySnapshot = await getDocs(collection(db, "gdx"));
+    const querySnapshot = await getDocs(collection(db, "clientes"));
     querySnapshot.forEach((doc) => {
       console.log(doc.id, " => ", doc.data());
     });
