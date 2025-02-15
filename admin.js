@@ -25,13 +25,30 @@ const db = initializeFirestore(app, {
 //  experimentalAutoDetectLongPolling: true
 });
 
+
+
+
+
+
 // Função para carregar registros corretamente
 async function carregarRegistros() {
-  try {
 
-  } catch (error) {
-    console.error("Erro ao carregar registros:", error);
-  }
+const dbRef = ref(database, 'caminho/para/dados');
+
+get(dbRef)
+  .then((snapshot) => {
+    if (snapshot.exists()) {
+      console.log(snapshot.val()); // Mostra os dados
+    } else {
+      console.log("Nenhum dado disponível");
+    }
+  })
+  .catch((error) => {
+    console.error("Erro ao ler os dados: ", error);
+  });
+
+
+  
 }
 
 // Espera o DOM carregar antes de executar
