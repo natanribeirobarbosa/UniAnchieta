@@ -4,7 +4,12 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
+import { initializeFirestore } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
 
+initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+  experimentalAutoDetectLongPolling: true
+});
 
 
 // 🔥 Configuração do Firebase (SUBSTITUA COM SEUS DADOS)
