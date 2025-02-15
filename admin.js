@@ -1,6 +1,7 @@
 // Importando o Firebase corretamente pelo CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
 import { getFirestore, initializeFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
+import { getDatabase, ref, get } from "firebase/database";
 
 // 🔥 Configuração do Firebase (SUBSTITUA COM SEUS DADOS)
 const firebaseConfig = {
