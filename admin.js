@@ -1,3 +1,10 @@
+import { initializeApp } from "firebase/app";
+
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+
+
+
 // 🔥 Configuração do Firebase (SUBSTITUA COM SEUS DADOS)
 const firebaseConfig = {
  apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
