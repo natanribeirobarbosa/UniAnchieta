@@ -26,7 +26,7 @@ const db = initializeFirestore(app, {
 });
 
 // Função para carregar registros corretamente
-/*async function carregarRegistros() {
+async function carregarRegistros() {
   try {
     const querySnapshot = await getDocs(collection(db, "clientes"));
     querySnapshot.forEach((doc) => {
@@ -39,7 +39,7 @@ const db = initializeFirestore(app, {
 
 // Espera o DOM carregar antes de executar
 document.addEventListener("DOMContentLoaded", carregarRegistros);
-*/
+
 // Função para adicionar registros
 function adicionarRegistro() {
     const predio = document.getElementById("predio").value;
