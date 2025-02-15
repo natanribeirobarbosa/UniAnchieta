@@ -33,7 +33,7 @@ const db = initializeFirestore(app, {
 // Função para carregar registros corretamente
 async function carregarRegistros() {
 
-const dbRef = ref(database, 'caminho/para/dados');
+const dbRef = ref(db, '/');
 
 get(dbRef)
   .then((snapshot) => {
