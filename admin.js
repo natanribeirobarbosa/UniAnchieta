@@ -6,10 +6,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebas
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
 import { initializeFirestore } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
 
-initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-  experimentalAutoDetectLongPolling: true
-});
 
 
 // 🔥 Configuração do Firebase (SUBSTITUA COM SEUS DADOS)
@@ -26,6 +22,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+
+initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+  experimentalAutoDetectLongPolling: true
+});
 
 // 🔥 Inicializa o Firebase
 //firebase.initializeApp(firebaseConfig);
