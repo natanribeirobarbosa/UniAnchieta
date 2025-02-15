@@ -49,29 +49,20 @@ function adicionarRegistro() {
     });
 }
 
-function carregarRegistros() {
-    const lista = document.getElementById("listaRegistros");
-    lista.innerHTML = "";
-
-    db.collection("salas").get().then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-            const item = doc.data();
-            const li = document.createElement("li");
-            li.classList = "border-b py-2 flex justify-between items-center";
-            li.innerHTML = `
-                <div>
-                    <strong>${item.predio} - ${item.sala}</strong><br>
-                    Curso: ${item.curso} | Disciplina: ${item.disciplina}<br>
-                    Docente: ${item.docente} | Horário: ${item.horario}
-                </div>
-                <button onclick="removerRegistro('${doc.id}')" class="text-red-500 text-sm ml-2">Excluir</button>
-            `;
-            lista.appendChild(li);
-        });
-    }).catch((error) => {
-        console.error("Erro ao carregar documentos: ", error);
+// Função para carregar registros corretamente
+async function carregarRegistros() {
+  try {
+    const querySnapshot = await getDocs(collection(db, "NOME_DA_COLECAO"));
+    querySnapshot.forEach((doc) => {
+      console.log(doc.id, " => ", doc.data());
     });
+  } catch (error) {
+    console.error("Erro ao carregar registros:", error);
+  }
 }
+
+// Espera o DOM carregar antes de executar
+document.addEventListener("DOMContentLoaded", carregarRegistros);
 
 function removerRegistro(id) {
     db.collection("salas").doc(id).delete().then(() => {
