@@ -17,13 +17,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Inicializa o Firestore apenas uma vez
-const db = getFirestore(app);
+//const db = getFirestore(app);
 
 // Não é necessário chamar initializeFirestore aqui, já que getFirestore() já cuida disso
-//initializeFirestore(app, {
-//  experimentalForceLongPolling: true,
-//  experimentalAutoDetectLongPolling: true
-//});
+const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+  experimentalAutoDetectLongPolling: true
+});
 
 // Função para carregar registros corretamente
 /*async function carregarRegistros() {
