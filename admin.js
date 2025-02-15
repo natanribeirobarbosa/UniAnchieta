@@ -1,53 +1,49 @@
-// Carregar os registros salvos ao abrir a página
-document.addEventListener("DOMContentLoaded", carregarRegistros);
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração - UniAnchieta</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+    <script src="admin.js" defer></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="flex flex-col items-center bg-gray-100 h-screen p-6">
+    <h1 class="text-2xl font-bold mb-4">Painel de Administração</h1>
 
-function adicionarRegistro() {
-    const predio = document.getElementById("predio").value;
-    const andar = document.getElementById("andar").value;
-    const sala = document.getElementById("sala").value;
-    const curso = document.getElementById("curso").value;
-    const disciplina = document.getElementById("disciplina").value;
-    const docente = document.getElementById("docente").value;
-    const horario = document.getElementById("horario").value;
+    <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
+        <label class="block font-semibold">Prédio:</label>
+        <input type="text" id="predio" class="border w-full p-2 mb-3" placeholder="Ex: Prédio A">
 
-    if (!predio || !andar || !sala || !curso || !disciplina || !docente || !horario) {
-        alert("Preencha todos os campos!");
-        return;
-    }
+        <label class="block font-semibold">Andar:</label>
+        <input type="text" id="andar" class="border w-full p-2 mb-3" placeholder="Ex: 1º Andar">
 
-    let registros = JSON.parse(localStorage.getItem("registros")) || [];
-    
-    registros.push({ predio, andar, sala, curso, disciplina, docente, horario });
-    
-    localStorage.setItem("registros", JSON.stringify(registros));
+        <label class="block font-semibold">Sala:</label>
+        <input type="text" id="sala" class="border w-full p-2 mb-3" placeholder="Ex: 101">
 
-    carregarRegistros();  // Atualiza a lista na tela
-}
+        <label class="block font-semibold">Curso:</label>
+        <input type="text" id="curso" class="border w-full p-2 mb-3" placeholder="Ex: Engenharia Civil">
 
-function carregarRegistros() {
-    let registros = JSON.parse(localStorage.getItem("registros")) || [];
-    const lista = document.getElementById("listaRegistros");
-    
-    lista.innerHTML = "";
-    registros.forEach((item, index) => {
-        const li = document.createElement("li");
-        li.classList = "border-b py-2";
-        li.innerHTML = `
-            <strong>${item.predio} - ${item.sala}</strong><br>
-            Curso: ${item.curso} | Disciplina: ${item.disciplina}<br>
-            Docente: ${item.docente} | Horário: ${item.horario}
-            <button onclick="removerRegistro(${index})" class="text-red-500 text-sm ml-2">Excluir</button>
-        `;
-        lista.appendChild(li);
-    });
-}
+        <label class="block font-semibold">Disciplina:</label>
+        <input type="text" id="disciplina" class="border w-full p-2 mb-3" placeholder="Ex: Cálculo I">
 
-function removerRegistro(index) {
-    let registros = JSON.parse(localStorage.getItem("registros")) || [];
-    
-    registros.splice(index, 1);
-    
-    localStorage.setItem("registros", JSON.stringify(registros));
-    
-    carregarRegistros();
-}
+        <label class="block font-semibold">Docente:</label>
+        <input type="text" id="docente" class="border w-full p-2 mb-3" placeholder="Ex: Prof. João Silva">
+
+        <label class="block font-semibold">Horário:</label>
+        <input type="text" id="horario" class="border w-full p-2 mb-3" placeholder="Ex: 08:00 - 10:00">
+
+        <button onclick="adicionarRegistro()" class="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-700">
+            Adicionar
+        </button>
+    </div>
+
+    <h2 class="text-xl font-bold mt-6">Dados Cadastrados</h2>
+    <ul id="listaRegistros" class="mt-3 w-full max-w-md bg-white p-4 shadow-md rounded"></ul>
+
+    <button onclick="window.location.href='index.html'" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
+        Voltar ao Mapa
+    </button>
+</body>
+</html>
