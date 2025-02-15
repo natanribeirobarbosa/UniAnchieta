@@ -1,16 +1,10 @@
 // Importando o Firebase corretamente pelo CDN
-//import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
-//import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
-import { initializeFirestore } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
-
-
 
 // 🔥 Configuração do Firebase (SUBSTITUA COM SEUS DADOS)
 const firebaseConfig = {
- apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
+  apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
   authDomain: "unianchieta-a83bd.firebaseapp.com",
   databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
   projectId: "unianchieta-a83bd",
@@ -21,21 +15,32 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
+// Inicializa o Firestore apenas uma vez
 const db = getFirestore(app);
 
+// Não é necessário chamar initializeFirestore aqui, já que getFirestore() já cuida disso
+//initializeFirestore(app, {
+//  experimentalForceLongPolling: true,
+//  experimentalAutoDetectLongPolling: true
+//});
 
-initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-  experimentalAutoDetectLongPolling: true
-});
+// Função para carregar registros corretamente
+async function carregarRegistros() {
+  try {
+    const querySnapshot = await getDocs(collection(db, "NOME_DA_COLECAO"));
+    querySnapshot.forEach((doc) => {
+      console.log(doc.id, " => ", doc.data());
+    });
+  } catch (error) {
+    console.error("Erro ao carregar registros:", error);
+  }
+}
 
-// 🔥 Inicializa o Firebase
-//firebase.initializeApp(firebaseConfig);
-//const db = firebase.firestore();
-
-// Carregar registros ao iniciar
+// Espera o DOM carregar antes de executar
 document.addEventListener("DOMContentLoaded", carregarRegistros);
 
+// Função para adicionar registros
 function adicionarRegistro() {
     const predio = document.getElementById("predio").value;
     const andar = document.getElementById("andar").value;
@@ -59,21 +64,7 @@ function adicionarRegistro() {
     });
 }
 
-// Função para carregar registros corretamente
-async function carregarRegistros() {
-  try {
-    const querySnapshot = await getDocs(collection(db, "NOME_DA_COLECAO"));
-    querySnapshot.forEach((doc) => {
-      console.log(doc.id, " => ", doc.data());
-    });
-  } catch (error) {
-    console.error("Erro ao carregar registros:", error);
-  }
-}
-
-// Espera o DOM carregar antes de executar
-document.addEventListener("DOMContentLoaded", carregarRegistros);
-
+// Função para remover registros
 function removerRegistro(id) {
     db.collection("salas").doc(id).delete().then(() => {
         carregarRegistros();
