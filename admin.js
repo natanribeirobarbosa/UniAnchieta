@@ -1,49 +1,73 @@
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administração - UniAnchieta</title>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-    <script src="admin.js" defer></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="flex flex-col items-center bg-gray-100 h-screen p-6">
-    <h1 class="text-2xl font-bold mb-4">Painel de Administração</h1>
+// 🔥 Configuração do Firebase (SUBSTITUA COM SEUS DADOS)
+const firebaseConfig = {
+ apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
+  authDomain: "unianchieta-a83bd.firebaseapp.com",
+  databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
+  projectId: "unianchieta-a83bd",
+  storageBucket: "unianchieta-a83bd.firebasestorage.app",
+  messagingSenderId: "566413683292",
+  appId: "1:566413683292:web:0b274aaf669269c7041499",
+  measurementId: "G-G8DGTH92FJ"
+};
 
-    <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
-        <label class="block font-semibold">Prédio:</label>
-        <input type="text" id="predio" class="border w-full p-2 mb-3" placeholder="Ex: Prédio A">
+// 🔥 Inicializa o Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-        <label class="block font-semibold">Andar:</label>
-        <input type="text" id="andar" class="border w-full p-2 mb-3" placeholder="Ex: 1º Andar">
+// Carregar registros ao iniciar
+document.addEventListener("DOMContentLoaded", carregarRegistros);
 
-        <label class="block font-semibold">Sala:</label>
-        <input type="text" id="sala" class="border w-full p-2 mb-3" placeholder="Ex: 101">
+function adicionarRegistro() {
+    const predio = document.getElementById("predio").value;
+    const andar = document.getElementById("andar").value;
+    const sala = document.getElementById("sala").value;
+    const curso = document.getElementById("curso").value;
+    const disciplina = document.getElementById("disciplina").value;
+    const docente = document.getElementById("docente").value;
+    const horario = document.getElementById("horario").value;
 
-        <label class="block font-semibold">Curso:</label>
-        <input type="text" id="curso" class="border w-full p-2 mb-3" placeholder="Ex: Engenharia Civil">
+    if (!predio || !andar || !sala || !curso || !disciplina || !docente || !horario) {
+        alert("Preencha todos os campos!");
+        return;
+    }
 
-        <label class="block font-semibold">Disciplina:</label>
-        <input type="text" id="disciplina" class="border w-full p-2 mb-3" placeholder="Ex: Cálculo I">
+    db.collection("salas").add({
+        predio, andar, sala, curso, disciplina, docente, horario
+    }).then(() => {
+        carregarRegistros();
+    }).catch((error) => {
+        console.error("Erro ao adicionar documento: ", error);
+    });
+}
 
-        <label class="block font-semibold">Docente:</label>
-        <input type="text" id="docente" class="border w-full p-2 mb-3" placeholder="Ex: Prof. João Silva">
+function carregarRegistros() {
+    const lista = document.getElementById("listaRegistros");
+    lista.innerHTML = "";
 
-        <label class="block font-semibold">Horário:</label>
-        <input type="text" id="horario" class="border w-full p-2 mb-3" placeholder="Ex: 08:00 - 10:00">
+    db.collection("salas").get().then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            const item = doc.data();
+            const li = document.createElement("li");
+            li.classList = "border-b py-2 flex justify-between items-center";
+            li.innerHTML = `
+                <div>
+                    <strong>${item.predio} - ${item.sala}</strong><br>
+                    Curso: ${item.curso} | Disciplina: ${item.disciplina}<br>
+                    Docente: ${item.docente} | Horário: ${item.horario}
+                </div>
+                <button onclick="removerRegistro('${doc.id}')" class="text-red-500 text-sm ml-2">Excluir</button>
+            `;
+            lista.appendChild(li);
+        });
+    }).catch((error) => {
+        console.error("Erro ao carregar documentos: ", error);
+    });
+}
 
-        <button onclick="adicionarRegistro()" class="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-700">
-            Adicionar
-        </button>
-    </div>
-
-    <h2 class="text-xl font-bold mt-6">Dados Cadastrados</h2>
-    <ul id="listaRegistros" class="mt-3 w-full max-w-md bg-white p-4 shadow-md rounded"></ul>
-
-    <button onclick="window.location.href='index.html'" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
-        Voltar ao Mapa
-    </button>
-</body>
-</html>
+function removerRegistro(id) {
+    db.collection("salas").doc(id).delete().then(() => {
+        carregarRegistros();
+    }).catch((error) => {
+        console.error("Erro ao excluir documento: ", error);
+    });
+}
