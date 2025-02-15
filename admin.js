@@ -16,9 +16,12 @@ const firebaseConfig = {
   measurementId: "G-G8DGTH92FJ"
 };
 
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 // 🔥 Inicializa o Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+//firebase.initializeApp(firebaseConfig);
+//const db = firebase.firestore();
 
 // Carregar registros ao iniciar
 document.addEventListener("DOMContentLoaded", carregarRegistros);
