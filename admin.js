@@ -28,10 +28,7 @@ const db = initializeFirestore(app, {
 // Função para carregar registros corretamente
 async function carregarRegistros() {
   try {
-    const querySnapshot = await getDocs(collection(db, "clientes"));
-    querySnapshot.forEach((doc) => {
-      console.log(doc.id, " => ", doc.data());
-    });
+
   } catch (error) {
     console.error("Erro ao carregar registros:", error);
   }
