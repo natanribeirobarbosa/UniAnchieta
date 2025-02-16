@@ -26,31 +26,48 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Função para adicionar dados ao Firestore
-        async function adicionarRegistro() {
-            const predio = document.getElementById("predio").value;
-            const andar = document.getElementById("andar").value;
-            const sala = document.getElementById("sala").value;
-            const curso = document.getElementById("curso").value;
-            const disciplina = document.getElementById("disciplina").value;
-            const docente = document.getElementById("docente").value;
-            const horario = document.getElementById("horario").value;
+        window.adicionarRegistro = async function() {
+            const predio = document.getElementById("predio").value.trim();
+            const andar = document.getElementById("andar").value.trim();
+            const sala = document.getElementById("sala").value.trim();
+            const curso = document.getElementById("curso").value.trim();
+            const disciplina = document.getElementById("disciplina").value.trim();
+            const docente = document.getElementById("docente").value.trim();
+            const horario = document.getElementById("horario").value.trim();
 
             if (!predio || !andar || !sala || !curso || !disciplina || !docente || !horario) {
-                alert("Preencha todos os campos antes de adicionar!");
+                alert("Preencha todos os campos!");
                 return;
             }
 
+            // Criando um array de palavras-chave para busca
+            const keywords = [predio, andar, sala, curso, disciplina, docente].map(k => k.toLowerCase());
+
             try {
                 await addDoc(collection(db, "salas"), {
-                    predio, andar, sala, curso, disciplina, docente, horario
+                    predio,
+                    andar,
+                    sala,
+                    curso,
+                    disciplina,
+                    docente,
+                    horario,
+                    keywords  // Incluindo as keywords no documento
                 });
-                alert("Registro adicionado com sucesso!");
-            } catch (error) {
-                console.error("Erro ao adicionar documento: ", error);
-            }
-        }
 
+                alert("Registro adicionado com sucesso!");
+                document.getElementById("predio").value = "";
+                document.getElementById("andar").value = "";
+                document.getElementById("sala").value = "";
+                document.getElementById("curso").value = "";
+                document.getElementById("disciplina").value = "";
+                document.getElementById("docente").value = "";
+                document.getElementById("horario").value = "";
+            } catch (error) {
+                console.error("Erro ao adicionar registro:", error);
+                alert("Erro ao adicionar registro!");
+            }
+        };
         // Função para carregar e exibir todos os registros em tempo real
        function carregarRegistros() {
     const lista = document.getElementById("listaRegistros");
