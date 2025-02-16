@@ -60,7 +60,7 @@
     onSnapshot(collection(db, "salas"), (snapshot) => {
         snapshot.forEach((doc) => {
             const data = doc.data();
-            console.log(ata.docente);
+            console.log(data.docente);
           console.log(typeof ata.docente);
             
             const item = document.createElement("li");
