@@ -61,6 +61,7 @@
                 lista.innerHTML = ""; // Limpa a lista antes de recarregar os dados
                 snapshot.forEach((doc) => {
                     const data = doc.data();
+                    console.log(data);
                     const item = document.createElement("li");
                     item.className = "border-b p-2";
                     item.innerHTML = `
