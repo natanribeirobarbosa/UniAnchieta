@@ -57,6 +57,7 @@
 
     // Referência ao banco de dados Firebase
     const salasRef = ref(db, 'salas');
+           console.log(salasRef);
 
     try {
         const snapshot = await get(salasRef);
