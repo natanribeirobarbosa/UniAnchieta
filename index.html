@@ -51,11 +51,33 @@
             // Verifica se a pesquisa não está vazia
             if (pesquisa === '') {
                 destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
+                   onSnapshot(collection(db, "salas"), (snapshot) => {
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            console.log(data);
+            console.log(data["keywords"]);
+          console.log(typeof data.keywords);
+            
+        });
+    });
+
+                
                 return;
             }
 
             // Referência para as salas no Firebase (sem filtro direto)
             const salasRef = ref(db, 'salas');
+            console.log(salasRef);
+   onSnapshot(collection(db, "salas"), (snapshot) => {
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            console.log(data);
+            console.log(data["keywords"]);
+          console.log(typeof data.keywords);
+            
+        });
+    });
+            
             try {
                 // Obtém todos os dados das salas
                 const snapshot = await get(salasRef);
