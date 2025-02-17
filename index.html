@@ -14,29 +14,28 @@
     <!-- Firebase (módulo separado) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-// Configuração do Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
-    authDomain: "unianchieta-a83bd.firebaseapp.com",
-    databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
-    projectId: "unianchieta-a83bd",
-    storageBucket: "unianchieta-a83bd.firebasestorage.app",
-    messagingSenderId: "566413683292",
-    appId: "1:566413683292:web:0b274aaf669269c7041499",
-    measurementId: "G-G8DGTH92FJ"
-};
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
+            authDomain: "unianchieta-a83bd.firebaseapp.com",
+            databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
+            projectId: "unianchieta-a83bd",
+            storageBucket: "unianchieta-a83bd.firebasestorage.app",
+            messagingSenderId: "566413683292",
+            appId: "1:566413683292:web:0b274aaf669269c7041499",
+            measurementId: "G-G8DGTH92FJ"
+        };
 
-// Inicializa o Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);  // Corrigido para usar o Firestore
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);  // Firestore correto
 
-// Disponibiliza a referência do banco para o script global
-window.firebaseDB = db;
-window.firebaseRef = ref;
-window.firebaseGet = get;
+        // Disponibiliza a referência do banco para o script global
+        window.firebaseDB = db;
+        window.firebaseRef = ref;
+        window.firebaseGet = get;
     </script>
 </head>
 <body class="flex flex-col items-center justify-center h-screen bg-gray-100">
@@ -95,53 +94,51 @@ window.firebaseGet = get;
             }
 
             const db = window.firebaseDB;
-            const ref = window.firebaseRef;
-            const get = window.firebaseGet;
 
+            // Corrigido: Uso do collection
             const salasRef = collection(db, "salas");
             const snapshot = await getDocs(salasRef);
             
             try {
-                const snapshot = await get(salasRef);
-
-                if (snapshot.exists()) {
-                    let encontrouResultado = false;
-
-                    snapshot.forEach((childSnapshot) => {
-                        const data = childSnapshot.val();
-                        const keywords = data["keywords"] || [];
-                        console.log(keywords);
-                        const palavrasChave = keywords.map(k => k.toLowerCase());
-                        console.log(palavrasChave);    
-                        if (palavrasChave.some(k => k.includes(pesquisa))) {
-                            encontrouResultado = true;
-
-                            // Criar item na lista
-                            const item = document.createElement("li");
-                            item.className = "border-b p-2";
-                            item.innerHTML = `
-                                <strong>${data["predio "]} - ${data["andar "]} - Sala ${data["sala "]}</strong><br>
-                                <span>${data["curso "]} | ${data["disciplina "]}</span><br>
-                                <small>${data["docente "]} - ${data["horario "]}</small>
-                            `;
-                            document.getElementById("infoDetalhada").appendChild(item);
-
-                            // Exibindo no mapa
-                            const marker = new google.maps.Marker({
-                                position: { lat: data.latitude, lng: data.longitude },
-                                map: map,
-                                title: data["sala "],
-                            });
-                            map.setCenter({ lat: data.latitude, lng: data.longitude });
-                        }
-                    });
-
-                    if (!encontrouResultado) {
-                        destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
-                    }
-                } else {
-                    destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa. 2';
+                if (snapshot.empty) {
+                    destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
+                    return;
                 }
+
+                let encontrouResultado = false;
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const keywords = data["keywords"] || [];
+                    const palavrasChave = keywords.map(k => k.toLowerCase());
+
+                    if (palavrasChave.some(k => k.includes(pesquisa))) {
+                        encontrouResultado = true;
+
+                        // Criar item na lista
+                        const item = document.createElement("li");
+                        item.className = "border-b p-2";
+                        item.innerHTML = `
+                            <strong>${data["predio "]} - ${data["andar "]} - Sala ${data["sala "]}</strong><br>
+                            <span>${data["curso "]} | ${data["disciplina "]}</span><br>
+                            <small>${data["docente "]} - ${data["horario "]}</small>
+                        `;
+                        document.getElementById("infoDetalhada").appendChild(item);
+
+                        // Exibindo no mapa
+                        const marker = new google.maps.Marker({
+                            position: { lat: data.latitude, lng: data.longitude },
+                            map: map,
+                            title: data["sala "],
+                        });
+                        map.setCenter({ lat: data.latitude, lng: data.longitude });
+                    }
+                });
+
+                if (!encontrouResultado) {
+                    destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
+                }
+
             } catch (error) {
                 console.error('Erro ao buscar destino:', error);
                 destinoMsg.textContent = 'Erro ao buscar destino.';
