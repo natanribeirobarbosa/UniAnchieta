@@ -37,34 +37,43 @@
         }
 
         // Função para buscar destino
-        window.buscarDestino = async function () {
-            const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
-            const destinoMsg = document.getElementById('destinoMsg');
-            const infoRota = document.getElementById('infoRota');
-            const infoAula = document.getElementById('infoAula');
-            const infoDetalhada = document.getElementById('infoDetalhada');
+       window.buscarDestino = async function () {
+    const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
+    const destinoMsg = document.getElementById('destinoMsg');
+    const infoRota = document.getElementById('infoRota');
+    const infoAula = document.getElementById('infoAula');
+    const infoDetalhada = document.getElementById('infoDetalhada');
 
-            // Limpar mensagens e informações anteriores
-            destinoMsg.textContent = '';
-            infoRota.textContent = '';
-            infoAula.textContent = '';
-            infoDetalhada.textContent = '';
+    // Limpar mensagens e informações anteriores
+    destinoMsg.textContent = '';
+    infoRota.textContent = '';
+    infoAula.textContent = '';
+    infoDetalhada.textContent = '';
 
-            if (!pesquisa) {
-                destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
-                return;
-            }
+    if (!pesquisa) {
+        destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
+        return;
+    }
 
-            // Consulta ao Firebase
-            const salasRef = ref(db, 'salas');
-            const salasQuery = query(salasRef, orderByChild('nome'), equalTo(pesquisa));
+    // Referência ao banco de dados Firebase
+    const salasRef = ref(db, 'salas');
 
-            try {
-                const snapshot = await get(salasQuery);
-                if (snapshot.exists()) {
-                    snapshot.forEach(childSnapshot => {
-                        const dados = childSnapshot.val();
+    try {
+        const snapshot = await get(salasRef);
+        if (snapshot.exists()) {
+            let resultadoEncontrado = false;
 
+            snapshot.forEach(childSnapshot => {
+                const dados = childSnapshot.val();
+
+                // Verifica se existe o campo "keywords" e se alguma contém o termo pesquisado
+                if (dados.keywords && Array.isArray(dados.keywords)) {
+                    const encontrou = dados.keywords.some(keyword => keyword.toLowerCase().includes(pesquisa));
+                    
+                    if (encontrou) {
+                        resultadoEncontrado = true;
+
+                        // Exibir informações
                         infoRota.textContent = `Rota para a sala: ${dados.nome}`;
                         infoAula.textContent = `Curso/Disciplina: ${dados.disciplina}, Docente: ${dados.professor}`;
                         infoDetalhada.innerHTML = `
@@ -87,15 +96,21 @@
                         });
 
                         map.setCenter({ lat: dados.latitude, lng: dados.longitude });
-                    });
-                } else {
-                    destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
+                    }
                 }
-            } catch (error) {
-                console.error('Erro ao buscar destino:', error);
-                destinoMsg.textContent = 'Erro ao buscar destino. Tente novamente.';
+            });
+
+            if (!resultadoEncontrado) {
+                destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
             }
-        };
+        } else {
+            destinoMsg.textContent = 'Nenhum destino encontrado.';
+        }
+    } catch (error) {
+        console.error('Erro ao buscar destino:', error);
+        destinoMsg.textContent = 'Erro ao buscar destino. Tente novamente.';
+    }
+};
 
         // Função de Admin
         window.abrirAdmin = function () {
