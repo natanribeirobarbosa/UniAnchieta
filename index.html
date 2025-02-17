@@ -6,7 +6,7 @@
     <title>Pesquisa de Localização - UniAnchieta</title>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // Configuração do Firebase
         const firebaseConfig = {
@@ -25,7 +25,7 @@
         const db = getFirestore(app);
 
         // Função para carregar os registros da Firestore
-        async function carregarRegistros(termos) {
+        async function carregarRegistros() {
             const lista = document.getElementById("listaRegistros");
             lista.innerHTML = ""; // Limpa a lista antes de recarregar os dados
 
@@ -33,25 +33,20 @@
             const snapshot = await getDocs(collection(db, "salas"));
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const keywords = data.keywords.join(" ").toLowerCase(); // Concatena as palavras-chave e transforma em minúsculas
+                const item = document.createElement("li");
+                item.className = "border-b p-2";
+                item.innerHTML = `
+                    <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
+                    <span>${data.curso} | ${data.disciplina}</span><br>
+                    <small>${data.docente} - ${data.horario}</small>
+                `;
 
-                // Verifica se algum termo de pesquisa está presente nas keywords
-                if (termos.every(termo => keywords.includes(termo))) {
-                    const item = document.createElement("li");
-                    item.className = "border-b p-2";
-                    item.innerHTML = `
-                        <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
-                        <span>${data.curso} | ${data.disciplina}</span><br>
-                        <small>${data.docente} - ${data.horario}</small>
-                    `;
+                // Adicionar evento de clique para exibir os detalhes
+                item.onclick = function() {
+                    exibirDetalhes(data); // Passa os dados para a função de exibição de detalhes
+                };
 
-                    // Adicionar evento de clique para exibir os detalhes
-                    item.onclick = function() {
-                        exibirDetalhes(data); // Passa os dados para a função de exibição de detalhes
-                    };
-
-                    lista.appendChild(item);
-                }
+                lista.appendChild(item);
             });
         }
 
@@ -89,12 +84,8 @@
             detalhesElemento.style.display = "block";
         }
 
-        // Função para realizar a pesquisa
-        function pesquisar() {
-            const pesquisaInput = document.getElementById("pesquisa");
-            const termos = pesquisaInput.value.trim().toLowerCase().split(" ");
-            carregarRegistros(termos); // Carrega os registros filtrados com base nos termos de pesquisa
-        }
+        // Carregar registros ao abrir a página
+        window.onload = carregarRegistros;
 
     </script>
 
@@ -103,11 +94,6 @@
 </head>
 <body class="flex flex-col items-center bg-gray-100 h-screen p-6">
     <h1 class="text-2xl font-bold mb-4">Pesquisa de Localização - UniAnchieta</h1>
-
-    <!-- Barra de Pesquisa -->
-    <div class="mb-6 w-full max-w-md">
-        <input id="pesquisa" type="text" class="border w-full p-2 mb-3" placeholder="Pesquisar por palavras-chave..." oninput="pesquisar()">
-    </div>
 
     <!-- Lista de Registros -->
     <ul id="listaRegistros" class="mt-3 w-full max-w-md bg-white p-4 shadow-md rounded"></ul>
