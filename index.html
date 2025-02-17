@@ -27,28 +27,21 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        async function obterCoordenadas(endereco) {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`);
-            const data = await response.json();
-            if (data.length > 0) {
-                return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) };
-            } else {
-                return null;
-            }
-        }
+        // Coordenadas fixas para os prédios
+        const coordenadasPredios = {
+            "Prédio 1": { latitude: -23.55052, longitude: -46.633308 },
+            "Prédio 2": { latitude: -23.55060, longitude: -46.633400 },
+            "Prédio 3": { latitude: -23.55070, longitude: -46.633500 }
+        };
 
-        async function exibirDetalhes(data) {
+        function exibirDetalhes(data) {
             const detalhesElemento = document.getElementById("detalhes");
             if (!detalhesElemento) return;
 
             document.getElementById("detalhesTitulo").innerHTML = `${data.predio} - Sala ${data.sala} (${data.curso})`;
             document.getElementById("detalhesDescricao").innerHTML = `Disciplina: ${data.disciplina}<br>Docente: ${data.docente}<br>Horário: ${data.horario}`;
             
-            let coordenadas = data.latitude && data.longitude ? { latitude: data.latitude, longitude: data.longitude } : await obterCoordenadas(data.predio);
-            if (!coordenadas) {
-                alert("Erro: Não foi possível obter a localização do destino.");
-                return;
-            }
+            const coordenadas = coordenadasPredios[data.predio] || coordenadasPredios["Prédio 1"];
             
             const mapa = document.getElementById("detalhesMapa");
             mapa.innerHTML = "<div id='map' style='width: 100%; height: 400px;'></div>";
