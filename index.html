@@ -61,6 +61,8 @@
 
     try {
         const snapshot = await get(salasRef);
+        console.log(snapshot.val())
+        
         if (snapshot.exists()) {
             let resultadoEncontrado = false;
 
