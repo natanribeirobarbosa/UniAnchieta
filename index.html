@@ -30,7 +30,7 @@
 
         // Inicializa o Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);  // Firestore correto
+        const db = getFirestore(app);  // Corrigido para usar o Firestore
 
         // Disponibiliza a referência do banco para o script global
         window.firebaseDB = db;
@@ -95,8 +95,8 @@
 
             const db = window.firebaseDB;
 
-            // Corrigido: Uso do collection
-            const salasRef = collection(db, "salas");
+            // Corrigido: Uso do Firestore corretamente
+            const salasRef = collection(db, "salas");  // Aqui você usa Firestore
             const snapshot = await getDocs(salasRef);
             
             try {
@@ -108,7 +108,7 @@
                 let encontrouResultado = false;
 
                 snapshot.forEach((doc) => {
-                    const data = doc.data();
+                    const data = doc.data();  // Acessa os dados do documento corretamente
                     const keywords = data["keywords"] || [];
                     const palavrasChave = keywords.map(k => k.toLowerCase());
 
