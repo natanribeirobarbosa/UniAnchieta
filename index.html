@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa UniAnchieta</title>
     <!-- Scripts do Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-    
-    <!-- Google Maps -->
-    <script async src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&callback=initMap"></script>
-    <script defer>
-        // Configuração do Firebase com suas credenciais
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
             authDomain: "unianchieta-a83bd.firebaseapp.com",
@@ -23,12 +21,14 @@
             measurementId: "G-G8DGTH92FJ"
         };
 
-        // Inicializando o Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore(app);
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Variável do mapa
+        let map;
 
         // Função para inicializar o mapa
-        let map;
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: -23.561, lng: -46.662 },
@@ -36,14 +36,14 @@
             });
         }
 
-        // Função de busca no Firebase
+        // Função para buscar destino
         window.buscarDestino = async function() {
             const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
             const destinoMsg = document.getElementById('destinoMsg');
             const infoRota = document.getElementById('infoRota');
             const infoAula = document.getElementById('infoAula');
             const infoDetalhada = document.getElementById('infoDetalhada');
-            
+
             // Limpar mensagens anteriores
             destinoMsg.textContent = '';
             infoRota.textContent = '';
@@ -56,17 +56,19 @@
                 return;
             }
 
-            // Referência à coleção 'salas' no Firestore
-            const salasRef = collection(db, "salas");
-            const q = query(salasRef, where("keywords", "array-contains", pesquisa));
+            // Referência à coleção 'salas' no Firebase Realtime Database
+            const salasRef = ref(db, 'salas');
+
+            // Consultando a base de dados por palavras-chave (usando "keywords")
+            const q = query(salasRef, orderByChild('keywords'), equalTo(pesquisa));
 
             try {
                 // Espera pela resposta da consulta
-                const querySnapshot = await getDocs(q);
+                const snapshot = await get(q);
 
-                if (!querySnapshot.empty) {
-                    querySnapshot.forEach((doc) => {
-                        const data = doc.data();
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const data = childSnapshot.val();
                         console.log(data);
                         console.log(data["keywords"]);
                         console.log(typeof data.keywords);
@@ -82,7 +84,7 @@
                         `;
                         lista.appendChild(item);
 
-                        // Adiciona o marcador no mapa
+                        // Exibindo no mapa
                         const marker = new google.maps.Marker({
                             position: { lat: data.latitude, lng: data.longitude },
                             map: map,
@@ -98,7 +100,15 @@
                 destinoMsg.textContent = 'Erro ao buscar destino.';
             }
         }
+
+        // Função de Admin
+        window.abrirAdmin = function () {
+            alert('Área de administração ainda não configurada.');
+        };
     </script>
+
+    <!-- Google Maps -->
+    <script async src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&callback=initMap"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="flex flex-col items-center justify-center h-screen bg-gray-100">
