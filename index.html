@@ -45,60 +45,96 @@
         }
 
         // Função para buscar na keyword e retornar resultados
-        window.buscarDestino = async function() {
-            const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
-            const destinoMsg = document.getElementById('destinoMsg');
-            const infoDetalhada = document.getElementById('infoDetalhada');
+      window.buscarDestino = async function() {
+    const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
+    const destinoMsg = document.getElementById('destinoMsg');
+    const infoDetalhada = document.getElementById('infoDetalhada');
 
-            destinoMsg.textContent = ''; // Limpar mensagens anteriores
-            infoDetalhada.textContent = ''; // Limpar resultados anteriores
+    destinoMsg.textContent = ''; // Limpar mensagens anteriores
+    infoDetalhada.textContent = ''; // Limpar resultados anteriores
 
-            if (pesquisa === '') {
-                destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
-                return;
+    if (pesquisa === '') {
+        destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
+        return;
+    }
+
+    try {
+        const salas = await carregarSalas();  // Carrega as salas do Firestore
+        let encontrouResultado = false;
+        let resultadoCount = 0;  // Contador de resultados
+
+        salas.forEach((data) => {
+            const keywords = data.keywords || [];
+            if (keywords.some(keyword => keyword.toLowerCase().includes(pesquisa))) {
+                encontrouResultado = true;
+                resultadoCount++;
+
+                // Criar item de resultado
+                const item = document.createElement("li");
+                item.className = "cursor-pointer p-2 border-b hover:bg-gray-100";
+                item.innerHTML = `
+                    <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
+                    <span>${data.curso} | ${data.disciplina}</span><br>
+                    <small>${data.docente} - ${data.horario}</small>
+                `;
+
+                // Adicionar evento de clique no item
+                item.onclick = function() {
+                    exibirDetalhes(data);
+                };
+
+                // Adicionar o item à lista de resultados
+                infoDetalhada.appendChild(item);
             }
+        });
 
-            try {
-                const salas = await carregarSalas();  // Carrega as salas do Firestore
-                let encontrouResultado = false;
+        if (!encontrouResultado) {
+            destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
+        }
 
-                salas.forEach((data) => {
-                    const keywords = data.keywords || [];
-                    if (keywords.some(keyword => keyword.toLowerCase().includes(pesquisa))) {
-                        encontrouResultado = true;
+    } catch (error) {
+        console.error('Erro ao buscar destino:', error);
+        destinoMsg.textContent = 'Erro ao buscar destino.';
+    }
+};
 
-                        // Exibir os resultados no console
-                        console.log("Resultado encontrado:");
-                        console.log(data);  // Exibe todas as informações da sala no console
+// Função para exibir detalhes de uma sala
+function exibirDetalhes(data) {
+    const infoDetalhada = document.getElementById('infoDetalhada');
+    const infoRota = document.getElementById('infoRota');
+    const infoAula = document.getElementById('infoAula');
+    
+    // Limpar a área de detalhes anteriores
+    infoDetalhada.innerHTML = '';
+    infoRota.innerHTML = '';
+    infoAula.innerHTML = '';
 
-                        // Criar item para exibir no painel
-                        const item = document.createElement("li");
-                        item.className = "border-b p-2";
-                        item.innerHTML = `
-                            <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
-                            <span>${data.curso} | ${data.disciplina}</span><br>
-                            <small>${data.docente} - ${data.horario}</small>
-                        `;
-                        infoDetalhada.appendChild(item);
+    // Exibir as informações detalhadas sobre a sala
+    infoRota.textContent = `Você está procurando pela sala: ${data.predio} - ${data.andar} - Sala ${data.sala}`;
+    infoAula.innerHTML = `
+        <strong>Curso:</strong> ${data.curso} <br>
+        <strong>Disciplina:</strong> ${data.disciplina} <br>
+        <strong>Docente:</strong> ${data.docente} <br>
+        <strong>Horário:</strong> ${data.horario}
+    `;
 
-                        // Exibe as informações detalhadas no mapa
-                        const marker = new google.maps.Marker({
-                            position: { lat: data.latitude, lng: data.longitude },
-                            map: map,
-                            title: data.sala,
-                        });
-                        map.setCenter({ lat: data.latitude, lng: data.longitude });
-                    }
-                });
+    // Mostrar como chegar no mapa
+    const marker = new google.maps.Marker({
+        position: { lat: data.latitude, lng: data.longitude },
+        map: map,
+        title: `${data.predio} - ${data.sala}`
+    });
 
-                if (!encontrouResultado) {
-                    destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
-                }
-            } catch (error) {
-                console.error('Erro ao buscar destino:', error);
-                destinoMsg.textContent = 'Erro ao buscar destino.';
-            }
-        };
+    // Centralizar o mapa na sala
+    map.setCenter({ lat: data.latitude, lng: data.longitude });
+    map.setZoom(18);
+
+    // Instrução de como chegar
+    const instrucao = document.createElement("p");
+    instrucao.textContent = `A sala está localizada no ${data.predio}, ${data.andar}º andar.`;
+    infoDetalhada.appendChild(instrucao);
+};
+
     </script>
 
     <!-- Google Maps -->
