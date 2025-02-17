@@ -65,7 +65,8 @@
 
             snapshot.forEach(childSnapshot => {
                 const dados = childSnapshot.val();
-
+                console.log(dados.keywords);
+                console.log(Array.isArray(dados.keywords));
                 // Verifica se existe o campo "keywords" e se alguma contém o termo pesquisado
                 if (dados.keywords && Array.isArray(dados.keywords)) {
                     const encontrou = dados.keywords.some(keyword => keyword.toLowerCase().includes(pesquisa));
