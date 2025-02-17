@@ -27,13 +27,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Coordenadas fixas para os prédios e locais
+        // Coordenadas atualizadas para os prédios
         const coordenadasLocais = {
-            "Prédio 1": { latitude: -23.214232770014892, longitude: -46.89120665435851 },
-            "Prédio 2": { latitude: -23.212946940709596, longitude: -46.89316186144081 },
-            "Prédio 3": { latitude: -23.213691840918962, longitude: -46.892801667879446 },
-            "Cantina": { latitude: -23.213156092500522, longitude: -46.89266263586027 },
-            "Biblioteca": { latitude: -23.21327398440769, longitude: -46.89258951672273 }
+            "Prédio 1": { latitude: -23.214433158266555, longitude: -46.89146281675962 },
+            "Prédio 2": { latitude: -23.21330932218799, longitude: -46.89255711603703 },
+            "Prédio 3": { latitude: -23.21381689404497, longitude: -46.892696577592055 }
         };
 
         function exibirDetalhes(data) {
@@ -49,46 +47,30 @@
             mapa.innerHTML = "<div id='map' style='width: 100%; height: 400px;'></div>";
             
             setTimeout(() => {
-    const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+                const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
 
-    const destinoMarker = L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
-        .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
+                const destinoMarker = L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
+                    .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
 
-    // 🔹 Exibir coordenadas ao clicar no mapa
-    map.on('click', function(e) {
-        alert(`Coordenadas: ${e.latlng.lat}, ${e.latlng.lng}`);
-    });
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        L.marker([latitude, longitude]).addTo(map)
+                            .bindPopup("Você está aqui").openPopup();
 
-    // 🔹 Mostrar coordenadas no console para debugging
-    map.on('click', function(e) {
-        console.log(`Coordenadas: ${e.latlng.lat}, ${e.latlng.lng}`);
-    });
-
-    // 🔹 Exibir coordenadas enquanto o mouse se move pelo mapa
-    map.on('mousemove', function(e) {
-        document.getElementById('coordenadas').innerText = `Lat: ${e.latlng.lat}, Lng: ${e.latlng.lng}`;
-    });
-
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const { latitude, longitude } = position.coords;
-            L.marker([latitude, longitude]).addTo(map)
-                .bindPopup("Você está aqui").openPopup();
-
-            L.polyline([
-                [latitude, longitude],
-                [coordenadas.latitude, coordenadas.longitude]
-            ], { color: 'blue' }).addTo(map);
-        },
-        () => {
-            alert("Não foi possível obter sua localização.");
-        }
-    );
-}, 200);
-
+                        L.polyline([
+                            [latitude, longitude],
+                            [coordenadas.latitude, coordenadas.longitude]
+                        ], { color: 'blue' }).addTo(map);
+                    },
+                    () => {
+                        alert("Não foi possível obter sua localização.");
+                    }
+                );
+            }, 200);
 
             detalhesElemento.style.display = "block";
         }
