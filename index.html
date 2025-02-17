@@ -30,7 +30,7 @@
 
         // Inicializa o Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        const db = getFirestore(app);
 
         // Disponibiliza a referência do banco para o script global
         window.firebaseDB = db;
@@ -97,8 +97,8 @@
             const ref = window.firebaseRef;
             const get = window.firebaseGet;
 
-            const salasRef = ref(db, 'salas');
-            console.log(salasRef);
+            const salasRef = collection(db, "salas");
+            const snapshot = await getDocs(salasRef);
             
             try {
                 const snapshot = await get(salasRef);
