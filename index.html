@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa UniAnchieta</title>
-    <!-- Scripts do Firebase -->
+
+    <!-- Google Maps -->
+    <script async src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&callback=initMap"></script>
+
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <!-- Firebase (módulo separado) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
@@ -21,14 +28,47 @@
             measurementId: "G-G8DGTH92FJ"
         };
 
-        // Inicializar o Firebase
+        // Inicializa o Firebase
         const app = initializeApp(firebaseConfig);
-        window.db = getDatabase(app); // Torna o banco acessível globalmente
-    </script>
+        const db = getDatabase(app);
 
+        // Disponibiliza a referência do banco para o script global
+        window.firebaseDB = db;
+        window.firebaseRef = ref;
+        window.firebaseGet = get;
+    </script>
+</head>
+<body class="flex flex-col items-center justify-center h-screen bg-gray-100">
+    <div class="bg-white shadow-lg rounded-lg p-6 max-w-md w-full text-center">
+        <h1 class="text-2xl font-bold mb-4">Sistema de Localização - UniAnchieta</h1>
+
+        <!-- Pesquisa -->
+        <input type="text" id="pesquisa" placeholder="Digite a sala, professor ou disciplina" class="border p-2 w-full rounded">
+        <button onclick="buscarDestino()" class="bg-green-500 text-white px-4 py-2 rounded mt-2 w-full hover:bg-green-700">
+            Buscar
+        </button>
+        <p id="destinoMsg" class="mt-2 text-red-500"></p>
+
+        <!-- Informações -->
+        <p id="infoRota" class="mt-4 text-lg font-semibold"></p>
+        <p id="infoAula" class="text-gray-700"></p>
+
+        <!-- Informações detalhadas da sala -->
+        <div id="infoDetalhada" class="mt-4 text-left text-gray-700"></div>
+
+        <!-- Mapa -->
+        <div id="map" class="mt-4 w-full h-64"></div>
+    </div>
+
+    <!-- Botão de Admin -->
+    <button onclick="abrirAdmin()" class="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded">
+        Admin
+    </button>
+
+    <!-- Script principal -->
     <script>
         let map;
-        
+
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: -23.561, lng: -46.662 },
@@ -39,20 +79,25 @@
         window.buscarDestino = async function() {
             const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
             const destinoMsg = document.getElementById('destinoMsg');
+            const infoRota = document.getElementById('infoRota');
+            const infoAula = document.getElementById('infoAula');
             const infoDetalhada = document.getElementById('infoDetalhada');
-            const lista = document.getElementById('lista'); // Adicione um elemento <ul id="lista"></ul> no HTML
 
-            // Limpar mensagens anteriores
             destinoMsg.textContent = '';
-            infoDetalhada.innerHTML = '';
-            lista.innerHTML = '';
+            infoRota.textContent = '';
+            infoAula.textContent = '';
+            infoDetalhada.textContent = '';
 
             if (pesquisa === '') {
                 destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
                 return;
             }
 
-            const salasRef = ref(window.db, 'salas');
+            const db = window.firebaseDB;
+            const ref = window.firebaseRef;
+            const get = window.firebaseGet;
+
+            const salasRef = ref(db, 'salas');
             try {
                 const snapshot = await get(salasRef);
 
@@ -71,17 +116,17 @@
                             const item = document.createElement("li");
                             item.className = "border-b p-2";
                             item.innerHTML = `
-                                <strong>${data["predio"]} - ${data["andar"]} - Sala ${data["sala"]}</strong><br>
-                                <span>${data["curso"]} | ${data["disciplina"]}</span><br>
-                                <small>${data["docente"]} - ${data["horario"]}</small>
+                                <strong>${data["predio "]} - ${data["andar "]} - Sala ${data["sala "]}</strong><br>
+                                <span>${data["curso "]} | ${data["disciplina "]}</span><br>
+                                <small>${data["docente "]} - ${data["horario "]}</small>
                             `;
-                            lista.appendChild(item);
+                            document.getElementById("infoDetalhada").appendChild(item);
 
-                            // Exibir no mapa
+                            // Exibindo no mapa
                             const marker = new google.maps.Marker({
                                 position: { lat: data.latitude, lng: data.longitude },
                                 map: map,
-                                title: data["sala"],
+                                title: data["sala "],
                             });
                             map.setCenter({ lat: data.latitude, lng: data.longitude });
                         }
@@ -99,47 +144,17 @@
             }
         };
 
+        window.abrirAdmin = function() {
+            window.location.href = "https://natanribeirobarbosa.github.io/UniAnchieta/admin.html";
+        };
+
         document.addEventListener("DOMContentLoaded", function() {
             document.getElementById("pesquisa").addEventListener("keypress", function(event) {
                 if (event.key === "Enter") {
-                    window.buscarDestino();
+                    buscarDestino();
                 }
             });
         });
-
-        window.abrirAdmin = function () {
-            alert('Área de administração ainda não configurada.');
-        };
     </script>
-
-    <!-- Google Maps -->
-    <script async src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&callback=initMap"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="flex flex-col items-center justify-center h-screen bg-gray-100">
-    <div class="bg-white shadow-lg rounded-lg p-6 max-w-md w-full text-center">
-        <h1 class="text-2xl font-bold mb-4">Sistema de Localização - UniAnchieta</h1>
-        
-        <!-- Pesquisa -->
-        <input type="text" id="pesquisa" placeholder="Digite a sala, professor ou disciplina" class="border p-2 w-full rounded">
-        <button onclick="window.buscarDestino()" class="bg-green-500 text-white px-4 py-2 rounded mt-2 w-full hover:bg-green-700">
-            Buscar
-        </button>
-        <p id="destinoMsg" class="mt-2 text-red-500"></p>
-
-        <!-- Informações detalhadas -->
-        <div id="infoDetalhada" class="mt-4 text-left text-gray-700"></div>
-
-        <!-- Lista de resultados -->
-        <ul id="lista" class="mt-4 text-left text-gray-700"></ul>
-
-        <!-- Mapa -->
-        <div id="map" class="mt-4 w-full h-64"></div>
-    </div>
-
-    <!-- Botão de Admin -->
-    <button onclick="window.abrirAdmin()" class="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded">
-        Admin
-    </button>
 </body>
 </html>
