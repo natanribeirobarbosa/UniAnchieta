@@ -27,11 +27,13 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Coordenadas fixas para os prédios
-        const coordenadasPredios = {
-            "Prédio 1": { latitude: -23.55052, longitude: -46.633308 },
-            "Prédio 2": { latitude: -23.55060, longitude: -46.633400 },
-            "Prédio 3": { latitude: -23.55070, longitude: -46.633500 }
+        // Coordenadas fixas para os prédios e locais
+        const coordenadasLocais = {
+            "Prédio 1": { latitude: -23.214232770014892, longitude: -46.89120665435851 },
+            "Prédio 2": { latitude: -23.212946940709596, longitude: -46.89316186144081 },
+            "Prédio 3": { latitude: -23.213691840918962, longitude: -46.892801667879446 },
+            "Cantina": { latitude: -23.213156092500522, longitude: -46.89266263586027 },
+            "Biblioteca": { latitude: -23.21327398440769, longitude: -46.89258951672273 }
         };
 
         function exibirDetalhes(data) {
@@ -41,7 +43,7 @@
             document.getElementById("detalhesTitulo").innerHTML = `${data.predio} - Sala ${data.sala} (${data.curso})`;
             document.getElementById("detalhesDescricao").innerHTML = `Disciplina: ${data.disciplina}<br>Docente: ${data.docente}<br>Horário: ${data.horario}`;
             
-            const coordenadas = coordenadasPredios[data.predio] || coordenadasPredios["Prédio 1"];
+            const coordenadas = coordenadasLocais[data.predio] || coordenadasLocais["Prédio 1"];
             
             const mapa = document.getElementById("detalhesMapa");
             mapa.innerHTML = "<div id='map' style='width: 100%; height: 400px;'></div>";
