@@ -5,16 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa UniAnchieta</title>
 
-    <!-- Google Maps -->
-    <script async src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&callback=initMap"></script>
-
-    <!-- Tailwind CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
-    <!-- Firebase (módulo separado) -->
+    <!-- Firebase CDN -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // Configuração do Firebase
         const firebaseConfig = {
@@ -30,12 +24,84 @@
 
         // Inicializa o Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);  // Corrigido para usar o Firestore
+        const db = getFirestore(app);
 
-        // Disponibiliza a referência do banco para o script global
-        window.firebaseDB = db;
-        window.firebaseGet = get;
+        // Função para carregar todas as salas do Firestore
+        async function carregarSalas() {
+            const salasRef = collection(db, "salas");
+            const snapshot = await getDocs(salasRef);
+
+            const salas = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                salas.push(data);  // Adiciona as salas no array
+            });
+
+            return salas;
+        }
+
+        // Função para buscar na keyword e retornar resultados
+        window.buscarDestino = async function() {
+            const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
+            const destinoMsg = document.getElementById('destinoMsg');
+            const infoDetalhada = document.getElementById('infoDetalhada');
+
+            destinoMsg.textContent = ''; // Limpar mensagens anteriores
+            infoDetalhada.textContent = ''; // Limpar resultados anteriores
+
+            if (pesquisa === '') {
+                destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
+                return;
+            }
+
+            try {
+                const salas = await carregarSalas();  // Carrega as salas do Firestore
+                let encontrouResultado = false;
+
+                salas.forEach((data) => {
+                    const keywords = data.keywords || [];
+                    if (keywords.some(keyword => keyword.toLowerCase().includes(pesquisa))) {
+                        encontrouResultado = true;
+
+                        // Exibir os resultados no console
+                        console.log("Resultado encontrado:");
+                        console.log(data);  // Exibe todas as informações da sala no console
+
+                        // Criar item para exibir no painel
+                        const item = document.createElement("li");
+                        item.className = "border-b p-2";
+                        item.innerHTML = `
+                            <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
+                            <span>${data.curso} | ${data.disciplina}</span><br>
+                            <small>${data.docente} - ${data.horario}</small>
+                        `;
+                        infoDetalhada.appendChild(item);
+
+                        // Exibe as informações detalhadas no mapa
+                        const marker = new google.maps.Marker({
+                            position: { lat: data.latitude, lng: data.longitude },
+                            map: map,
+                            title: data.sala,
+                        });
+                        map.setCenter({ lat: data.latitude, lng: data.longitude });
+                    }
+                });
+
+                if (!encontrouResultado) {
+                    destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
+                }
+            } catch (error) {
+                console.error('Erro ao buscar destino:', error);
+                destinoMsg.textContent = 'Erro ao buscar destino.';
+            }
+        };
     </script>
+
+    <!-- Google Maps -->
+    <script async src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&callback=initMap"></script>
+
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="flex flex-col items-center justify-center h-screen bg-gray-100">
     <div class="bg-white shadow-lg rounded-lg p-6 max-w-md w-full text-center">
@@ -48,110 +114,27 @@
         </button>
         <p id="destinoMsg" class="mt-2 text-red-500"></p>
 
-        <!-- Informações -->
-        <p id="infoRota" class="mt-4 text-lg font-semibold"></p>
-        <p id="infoAula" class="text-gray-700"></p>
-
         <!-- Informações detalhadas da sala -->
         <div id="infoDetalhada" class="mt-4 text-left text-gray-700"></div>
 
         <!-- Mapa -->
         <div id="map" class="mt-4 w-full h-64"></div>
     </div>
-
-    <!-- Botão de Admin -->
-    <button onclick="abrirAdmin()" class="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded">
-        Admin
-    </button>
-
-    <!-- Script principal -->
-    <script>
-        let map;
-
-        function initMap() {
-            map = new google.maps.Map(document.getElementById('map'), {
-                center: { lat: -23.561, lng: -46.662 },
-                zoom: 16
-            });
-        }
-
-      window.buscarDestino = async function() {
-    const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
-    const destinoMsg = document.getElementById('destinoMsg');
-    const infoRota = document.getElementById('infoRota');
-    const infoAula = document.getElementById('infoAula');
-    const infoDetalhada = document.getElementById('infoDetalhada');
-
-    // Limpa as mensagens anteriores
-    destinoMsg.textContent = '';
-    infoRota.textContent = '';
-    infoAula.textContent = '';
-    infoDetalhada.textContent = '';
-
-    // Valida se a pesquisa foi feita
-    if (pesquisa === '') {
-        destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
-        return;
-    }
-
-    try {
-        // Refere-se à coleção de "salas" no Firestore
-        const salasRef = collection(db, "salas");
-        const snapshot = await getDocs(salasRef);
-        
-        let encontrouResultado = false;
-
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            const keywords = data.keywords || [];
-
-            // Verifica se alguma palavra-chave corresponde à pesquisa
-            if (keywords.some(keyword => keyword.includes(pesquisa))) {
-                encontrouResultado = true;
-
-                // Exibindo informações da sala
-                const item = document.createElement("li");
-                item.className = "border-b p-2";
-                item.innerHTML = `
-                    <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
-                    <span>${data.curso} | ${data.disciplina}</span><br>
-                    <small>${data.docente} - ${data.horario}</small>
-                `;
-                infoDetalhada.appendChild(item);
-
-                // Exibindo o marcador no mapa
-                const marker = new google.maps.Marker({
-                    position: { lat: data.latitude, lng: data.longitude },
-                    map: map,
-                    title: data.sala,
-                });
-                map.setCenter({ lat: data.latitude, lng: data.longitude });
-            }
-        });
-
-        // Se não encontrar resultado, exibe uma mensagem
-        if (!encontrouResultado) {
-            destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
-        }
-
-    } catch (error) {
-        console.error('Erro ao buscar destino:', error);
-        destinoMsg.textContent = 'Erro ao buscar destino.';
-    }
-};
-
-
-        window.abrirAdmin = function() {
-            window.location.href = "https://natanribeirobarbosa.github.io/UniAnchieta/admin.html";
-        };
-
-        document.addEventListener("DOMContentLoaded", function() {
-            document.getElementById("pesquisa").addEventListener("keypress", function(event) {
-                if (event.key === "Enter") {
-                    buscarDestino();
-                }
-            });
-        });
-    </script>
 </body>
+
+<script>
+    let map;
+
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat: -23.561, lng: -46.662 },
+            zoom: 16
+        });
+    }
+
+    // Carregar o mapa assim que a página for carregada
+    window.onload = function() {
+        initMap();
+    };
+</script>
 </html>
