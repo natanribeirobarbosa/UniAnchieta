@@ -3,130 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa UniAnchieta</title>
-    <!-- Scripts do Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-    
-    <!-- Google Maps -->
-    <script async src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&callback=initMap"></script>
-    <script defer>
-        // Configuração do Firebase com suas credenciais
+    <title>Administração - UniAnchieta</title>
+
+    <!-- Firebase CDN -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Configuração do Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
-            authDomain: "unianchieta-a83bd.firebaseapp.com",
-            databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
-            projectId: "unianchieta-a83bd",
-            storageBucket: "unianchieta-a83bd.firebasestorage.app",
-            messagingSenderId: "566413683292",
-            appId: "1:566413683292:web:0b274aaf669269c7041499",
-            measurementId: "G-G8DGTH92FJ"
+    apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
+  authDomain: "unianchieta-a83bd.firebaseapp.com",
+  databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
+  projectId: "unianchieta-a83bd",
+  storageBucket: "unianchieta-a83bd.firebasestorage.app",
+  messagingSenderId: "566413683292",
+  appId: "1:566413683292:web:0b274aaf669269c7041499",
+  measurementId: "G-G8DGTH92FJ"
         };
 
-        // Inicializando o Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-        // Variável para armazenar a referência ao mapa
-        let map;
+        window.adicionarRegistro = async function() {
+            const predio = document.getElementById("predio").value.trim();
+            const andar = document.getElementById("andar").value.trim();
+            const sala = document.getElementById("sala").value.trim();
+            const curso = document.getElementById("curso").value.trim();
+            const disciplina = document.getElementById("disciplina").value.trim();
+            const docente = document.getElementById("docente").value.trim();
+            const horario = document.getElementById("horario").value.trim();
 
-        // Função para inicializar o mapa
-        function initMap() {
-            map = new google.maps.Map(document.getElementById('map'), {
-                center: { lat: -23.561, lng: -46.662 }, // Centralizando o mapa
-                zoom: 16
-            });
-        }
-
-        // Função de busca no Firebase
-        function buscarDestino() {
-            const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
-            const destinoMsg = document.getElementById('destinoMsg');
-            const infoRota = document.getElementById('infoRota');
-            const infoAula = document.getElementById('infoAula');
-            const infoDetalhada = document.getElementById('infoDetalhada');
-            
-            // Limpar mensagens e informações anteriores
-            destinoMsg.textContent = '';
-            infoRota.textContent = '';
-            infoAula.textContent = '';
-            infoDetalhada.textContent = '';
-
-            // Verifica se a pesquisa não está vazia
-            if (pesquisa === '') {
-                destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
+            if (!predio || !andar || !sala || !curso || !disciplina || !docente || !horario) {
+                alert("Preencha todos os campos!");
                 return;
             }
 
-            const salasRef = db.ref('salas'); // Ref para as salas no Firebase
-            salasRef.orderByChild('nome').equalTo(pesquisa).once('value', snapshot => {
-                if (snapshot.exists()) {
-                    snapshot.forEach(childSnapshot => {
-                        const dados = childSnapshot.val();
+            // Criando um array de palavras-chave para busca
+            const keywords = [predio, andar, sala, curso, disciplina, docente].map(k => k.toLowerCase());
 
-                        // Exibir as informações detalhadas da sala
-                        infoRota.textContent = `Rota para a sala: ${dados.nome}`;
-                        infoAula.textContent = `Curso/Disciplina: ${dados.disciplina}, Docente: ${dados.professor}`;
-                        
-                        // Informações detalhadas sobre a localização
-                        infoDetalhada.innerHTML = `
-                            <strong>Andar:</strong> ${dados.andar}<br>
-                            <strong>Prédio:</strong> ${dados.predio}<br>
-                            <strong>Horário:</strong> ${dados.horario}<br>
-                            <strong>Sala:</strong> ${dados.sala}<br>
-                            <strong>Como Chegar:</strong><br>
-                            - Dirija-se até o prédio ${dados.predio}.<br>
-                            - Suba até o ${dados.andar}º andar.<br>
-                            - A sala ${dados.sala} estará à sua direita/esquerda.<br>
-                            - O professor ${dados.professor} dará aula de ${dados.disciplina} nesse horário: ${dados.horario}.
-                        `;
+            try {
+                await addDoc(collection(db, "salas"), {
+                    predio,
+                    andar,
+                    sala,
+                    curso,
+                    disciplina,
+                    docente,
+                    horario,
+                    keywords  // Incluindo as keywords no documento
+                });
 
-                        // Adicionar marcador no mapa
-                        const marker = new google.maps.Marker({
-                            position: { lat: dados.latitude, lng: dados.longitude },
-                            map: map,
-                            title: dados.nome
-                        });
-                        map.setCenter({ lat: dados.latitude, lng: dados.longitude }); // Centralizar o mapa no destino
-                    });
-                } else {
-                    destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
-                }
-            });
-        }
+                alert("Registro adicionado com sucesso!");
+                document.getElementById("predio").value = "";
+                document.getElementById("andar").value = "";
+                document.getElementById("sala").value = "";
+                document.getElementById("curso").value = "";
+                document.getElementById("disciplina").value = "";
+                document.getElementById("docente").value = "";
+                document.getElementById("horario").value = "";
+            } catch (error) {
+                console.error("Erro ao adicionar registro:", error);
+                alert("Erro ao adicionar registro!");
+            }
+        };
+        // Função para carregar e exibir todos os registros em tempo real
+       function carregarRegistros() {
+    const lista = document.getElementById("listaRegistros");
+    lista.innerHTML = ""; // Limpa a lista antes de recarregar os dados
 
-        // Função de Admin (apenas um exemplo)
-        function abrirAdmin() {
-            alert('Área de administração ainda não configurada.');
-        }
+    // Atualiza automaticamente sempre que houver mudança no Firestore
+    onSnapshot(collection(db, "salas"), (snapshot) => {
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            console.log(data);
+            console.log(data["docente "]);
+          console.log(typeof data.docente);
+            
+            const item = document.createElement("li");
+            item.className = "border-b p-2";
+
+            // Defina o conteúdo diretamente, sem precisar do evento DOMContentLoaded
+            item.innerHTML = `
+                <strong>${data["predio "]} - ${data["andar "]} - Sala ${data["sala "]}</strong><br>
+                <span>${data["curso "]} | ${data["disciplina "]}</span><br>
+                <small>${data["docente "]} - ${data["horario "]}</small>
+            `;
+            lista.appendChild(item);
+        });
+    });
+}
+
+
+        // Carregar registros ao abrir a página
+        window.onload = carregarRegistros;
     </script>
+
+    <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="flex flex-col items-center justify-center h-screen bg-gray-100">
-    <div class="bg-white shadow-lg rounded-lg p-6 max-w-md w-full text-center">
-        <h1 class="text-2xl font-bold mb-4">Sistema de Localização - UniAnchieta</h1>
-        
-        <!-- Pesquisa -->
-        <input type="text" id="pesquisa" placeholder="Digite a sala, professor ou disciplina" class="border p-2 w-full rounded">
-        <button onclick="buscarDestino()" class="bg-green-500 text-white px-4 py-2 rounded mt-2 w-full hover:bg-green-700">
-            Buscar
+<body class="flex flex-col items-center bg-gray-100 h-screen p-6">
+    <h1 class="text-2xl font-bold mb-4">Painel de Administração</h1>
+
+    <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
+        <label class="block font-semibold">Prédio:</label>
+        <input type="text" id="predio" class="border w-full p-2 mb-3" placeholder="Ex: Prédio A">
+
+        <label class="block font-semibold">Andar:</label>
+        <input type="text" id="andar" class="border w-full p-2 mb-3" placeholder="Ex: 1º Andar">
+
+        <label class="block font-semibold">Sala:</label>
+        <input type="text" id="sala" class="border w-full p-2 mb-3" placeholder="Ex: 101">
+
+        <label class="block font-semibold">Curso:</label>
+        <input type="text" id="curso" class="border w-full p-2 mb-3" placeholder="Ex: Engenharia Civil">
+
+        <label class="block font-semibold">Disciplina:</label>
+        <input type="text" id="disciplina" class="border w-full p-2 mb-3" placeholder="Ex: Cálculo I">
+
+        <label class="block font-semibold">Docente:</label>
+        <input type="text" id="docente" class="border w-full p-2 mb-3" placeholder="Ex: Prof. João Silva">
+
+        <label class="block font-semibold">Horário:</label>
+        <input type="text" id="horario" class="border w-full p-2 mb-3" placeholder="Ex: 08:00 - 10:00">
+
+        <button onclick="adicionarRegistro()" class="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-700">
+            Adicionar
         </button>
-        <p id="destinoMsg" class="mt-2 text-red-500"></p>
-
-        <!-- Informações -->
-        <p id="infoRota" class="mt-4 text-lg font-semibold"></p>
-        <p id="infoAula" class="text-gray-700"></p>
-
-        <!-- Informações detalhadas da sala -->
-        <div id="infoDetalhada" class="mt-4 text-left text-gray-700"></div>
-
-        <!-- Mapa -->
-        <div id="map" class="mt-4 w-full h-64"></div>
     </div>
 
-    <!-- Botão de Admin -->
-    <button onclick="abrirAdmin()" class="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded">
-        Admin
+    <h2 class="text-xl font-bold mt-6">Dados Cadastrados</h2>
+    <ul id="listaRegistros" class="mt-3 w-full max-w-md bg-white p-4 shadow-md rounded"></ul>
+
+    <button onclick="window.location.href='index.html'" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
+        Voltar ao Mapa
     </button>
 </body>
 </html>
