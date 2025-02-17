@@ -35,99 +35,78 @@
         }
 
         // Função para buscar destino
-        window.buscarDestino = async function() {
-            const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
-            const destinoMsg = document.getElementById('destinoMsg');
-            const infoRota = document.getElementById('infoRota');
-            const infoAula = document.getElementById('infoAula');
-            const infoDetalhada = document.getElementById('infoDetalhada');
+      window.buscarDestino = async function() {
+    const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
+    const destinoMsg = document.getElementById('destinoMsg');
+    const infoRota = document.getElementById('infoRota');
+    const infoAula = document.getElementById('infoAula');
+    const infoDetalhada = document.getElementById('infoDetalhada');
 
-            // Limpar mensagens anteriores
-            destinoMsg.textContent = '';
-            infoRota.textContent = '';
-            infoAula.textContent = '';
-            infoDetalhada.textContent = '';
+    // Limpar mensagens anteriores
+    destinoMsg.textContent = '';
+    infoRota.textContent = '';
+    infoAula.textContent = '';
+    infoDetalhada.textContent = '';
 
-            // Verifica se a pesquisa não está vazia
-            if (pesquisa === '') {
-                destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
-                   onSnapshot(collection(db, "salas"), (snapshot) => {
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            console.log(data);
-            console.log(data["keywords"]);
-          console.log(typeof data.keywords);
-            
-        });
-    });
+    // Verifica se a pesquisa não está vazia
+    if (pesquisa === '') {
+        destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
+        return;
+    }
 
-                
-                return;
-            }
+    // Referência para as salas no Firebase (sem filtro direto)
+    const salasRef = ref(db, 'salas');
+    try {
+        // Obtém todos os dados das salas (substituindo o onSnapshot por get)
+        const snapshot = await get(salasRef);
 
-            // Referência para as salas no Firebase (sem filtro direto)
-            const salasRef = ref(db, 'salas');
-            console.log(salasRef);
-   onSnapshot(collection(db, "salas"), (snapshot) => {
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            console.log(data);
-            console.log(data["keywords"]);
-          console.log(typeof data.keywords);
-            
-        });
-    });
-            
-            try {
-                // Obtém todos os dados das salas
-                const snapshot = await get(salasRef);
+        if (snapshot.exists()) {
+            let encontrouResultado = false;
 
-                if (snapshot.exists()) {
-                    let encontrouResultado = false;
+            snapshot.forEach((childSnapshot) => {
+                const data = childSnapshot.val();
+                console.log(data);
+                console.log(data["keywords"]);
 
-                    snapshot.forEach((childSnapshot) => {
-                        const data = childSnapshot.val();
-                        console.log(data);
-                        console.log(data["keywords"]);
+                // Filtra pela pesquisa nas keywords após buscar todas as salas
+                const keywords = data["keywords"] || [];
+                const palavrasChave = keywords.map(k => k.toLowerCase());
 
-                        // Filtra pela pesquisa nas keywords após buscar todas as salas
-                        const keywords = data["keywords"] || [];
-                        const palavrasChave = keywords.map(k => k.toLowerCase());
+                if (palavrasChave.some(k => k.includes(pesquisa))) {
+                    encontrouResultado = true;
 
-                        if (palavrasChave.some(k => k.includes(pesquisa))) {
-                            encontrouResultado = true;
+                    // Criar item na lista
+                    const item = document.createElement("li");
+                    item.className = "border-b p-2";
+                    item.innerHTML = `
+                        <strong>${data["predio "]} - ${data["andar "]} - Sala ${data["sala "]}</strong><br>
+                        <span>${data["curso "]} | ${data["disciplina "]}</span><br>
+                        <small>${data["docente "]} - ${data["horario "]}</small>
+                    `;
+                    lista.appendChild(item);
 
-                            // Criar item na lista
-                            const item = document.createElement("li");
-                            item.className = "border-b p-2";
-                            item.innerHTML = `
-                                <strong>${data["predio "]} - ${data["andar "]} - Sala ${data["sala "]}</strong><br>
-                                <span>${data["curso "]} | ${data["disciplina "]}</span><br>
-                                <small>${data["docente "]} - ${data["horario "]}</small>
-                            `;
-                            lista.appendChild(item);
-
-                            // Exibindo no mapa
-                            const marker = new google.maps.Marker({
-                                position: { lat: data.latitude, lng: data.longitude },
-                                map: map,
-                                title: data["sala "],
-                            });
-                            map.setCenter({ lat: data.latitude, lng: data.longitude });
-                        }
+                    // Exibindo no mapa
+                    const marker = new google.maps.Marker({
+                        position: { lat: data.latitude, lng: data.longitude },
+                        map: map,
+                        title: data["sala "],
                     });
-
-                    if (!encontrouResultado) {
-                        destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
-                    }
-                } else {
-                    destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
+                    map.setCenter({ lat: data.latitude, lng: data.longitude });
                 }
-            } catch (error) {
-                console.error('Erro ao buscar destino:', error);
-                destinoMsg.textContent = 'Erro ao buscar destino.';
+            });
+
+            if (!encontrouResultado) {
+                destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
             }
-        };
+        } else {
+            destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
+        }
+    } catch (error) {
+        console.error('Erro ao buscar destino:', error);
+        destinoMsg.textContent = 'Erro ao buscar destino.';
+    }
+};
+
 
         // Função de Admin (exemplo de página administrativa)
         window.abrirAdmin = function () {
