@@ -37,84 +37,69 @@
         }
 
         // Função para buscar destino
-       window.buscarDestino = async function () {
+     // Definindo a função globalmente
+window.buscarDestino = async function() {
     const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
     const destinoMsg = document.getElementById('destinoMsg');
     const infoRota = document.getElementById('infoRota');
     const infoAula = document.getElementById('infoAula');
     const infoDetalhada = document.getElementById('infoDetalhada');
 
-    // Limpar mensagens e informações anteriores
+    // Limpar mensagens anteriores
     destinoMsg.textContent = '';
     infoRota.textContent = '';
     infoAula.textContent = '';
     infoDetalhada.textContent = '';
 
-    if (!pesquisa) {
+    // Verifica se a pesquisa não está vazia
+    if (pesquisa === '') {
         destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
         return;
     }
 
-    // Referência ao banco de dados Firebase
-    const salasRef = ref(db, 'salas');
-           console.log(salasRef);
+    // Referência à coleção 'salas' no Firestore
+    const salasRef = collection(db, "salas");
+    const q = query(salasRef, where("keywords", "array-contains", pesquisa)); // Filtra pelo campo keywords
 
     try {
-        const snapshot = await get(salasRef);
-        console.log(snapshot.val())
-        
-        if (snapshot.exists()) {
-            let resultadoEncontrado = false;
+        // Espera pela resposta da consulta
+        const querySnapshot = await getDocs(q);
 
-            snapshot.forEach(childSnapshot => {
-                const dados = childSnapshot.val();
-                console.log(dados.keywords);
-                console.log(Array.isArray(dados.keywords));
-                // Verifica se existe o campo "keywords" e se alguma contém o termo pesquisado
-                if (dados.keywords && Array.isArray(dados.keywords)) {
-                    const encontrou = dados.keywords.some(keyword => keyword.toLowerCase().includes(pesquisa));
-                    
-                    if (encontrou) {
-                        resultadoEncontrado = true;
+        if (!querySnapshot.empty) {
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                console.log(data);
+                console.log(data["keywords"]);
+                console.log(typeof data.keywords);
 
-                        // Exibir informações
-                        infoRota.textContent = `Rota para a sala: ${dados.nome}`;
-                        infoAula.textContent = `Curso/Disciplina: ${dados.disciplina}, Docente: ${dados.professor}`;
-                        infoDetalhada.innerHTML = `
-                            <strong>Andar:</strong> ${dados.andar}<br>
-                            <strong>Prédio:</strong> ${dados.predio}<br>
-                            <strong>Horário:</strong> ${dados.horario}<br>
-                            <strong>Sala:</strong> ${dados.sala}<br>
-                            <strong>Como Chegar:</strong><br>
-                            - Dirija-se até o prédio ${dados.predio}.<br>
-                            - Suba até o ${dados.andar}º andar.<br>
-                            - A sala ${dados.sala} estará à sua direita/esquerda.<br>
-                            - O professor ${dados.professor} dará aula de ${dados.disciplina} nesse horário: ${dados.horario}.
-                        `;
+                const item = document.createElement("li");
+                item.className = "border-b p-2";
 
-                        // Adicionar marcador no mapa
-                        new google.maps.Marker({
-                            position: { lat: dados.latitude, lng: dados.longitude },
-                            map: map,
-                            title: dados.nome
-                        });
+                // Defina o conteúdo diretamente
+                item.innerHTML = `
+                    <strong>${data["predio "]} - ${data["andar "]} - Sala ${data["sala "]}</strong><br>
+                    <span>${data["curso "]} | ${data["disciplina "]}</span><br>
+                    <small>${data["docente "]} - ${data["horario "]}</small>
+                `;
+                lista.appendChild(item);
 
-                        map.setCenter({ lat: dados.latitude, lng: dados.longitude });
-                    }
-                }
+                // Exibindo no mapa
+                const marker = new google.maps.Marker({
+                    position: { lat: data.latitude, lng: data.longitude },
+                    map: map,
+                    title: data["sala "],
+                });
+                map.setCenter({ lat: data.latitude, lng: data.longitude });
             });
-
-            if (!resultadoEncontrado) {
-                destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
-            }
         } else {
-            destinoMsg.textContent = 'Nenhum destino encontrado.';
+            destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
         }
     } catch (error) {
         console.error('Erro ao buscar destino:', error);
-        destinoMsg.textContent = 'Erro ao buscar destino. Tente novamente.';
+        destinoMsg.textContent = 'Erro ao buscar destino.';
     }
-};
+}
+
 
         // Função de Admin
         window.abrirAdmin = function () {
