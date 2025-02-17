@@ -34,7 +34,7 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 const item = document.createElement("li");
-                item.className = "border-b p-2";
+                item.className = "border-b p-2 cursor-pointer";
                 item.innerHTML = `
                     <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
                     <span>${data.curso} | ${data.disciplina}</span><br>
@@ -56,26 +56,33 @@
             
             const mapa = document.getElementById("detalhesMapa");
             mapa.innerHTML = "<div id='map' style='width: 100%; height: 400px;'></div>";
+            
             setTimeout(() => {
-                const map = L.map('map').setView([-23.55052, -46.633308], 15);
+                const map = L.map('map').setView([data.latitude, data.longitude], 15);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
-                L.marker([-23.55052, -46.633308]).addTo(map)
+
+                const destinoMarker = L.marker([data.latitude, data.longitude]).addTo(map)
                     .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
 
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const { latitude, longitude } = position.coords;
-                        map.setView([latitude, longitude], 15);
-                        L.marker([latitude, longitude]).addTo(map)
+                        const userMarker = L.marker([latitude, longitude]).addTo(map)
                             .bindPopup("Você está aqui").openPopup();
+
+                        const rota = L.polyline([
+                            [latitude, longitude],
+                            [data.latitude, data.longitude]
+                        ], {color: 'blue'}).addTo(map);
                     },
                     () => {
                         alert("Não foi possível obter sua localização.");
                     }
                 );
             }, 200);
+
             detalhesElemento.style.display = "block";
         }
 
@@ -98,7 +105,7 @@
             if (resultados.length > 0) {
                 resultados.forEach(data => {
                     const item = document.createElement("li");
-                    item.className = "border-b p-2";
+                    item.className = "border-b p-2 cursor-pointer";
                     item.innerHTML = `
                         <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
                         <span>${data.curso} | ${data.disciplina}</span><br>
