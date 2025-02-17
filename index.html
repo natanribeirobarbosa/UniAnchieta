@@ -4,9 +4,101 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa UniAnchieta</title>
-    <script src="script.js" defer></script>
+    <!-- Scripts do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    
+    <!-- Google Maps -->
     <script async src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&callback=initMap"></script>
-        <script async src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&callback=console.debug&libraries=maps,marker&v=beta">
+    <script defer>
+        // Configuração do Firebase com suas credenciais
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
+            authDomain: "unianchieta-a83bd.firebaseapp.com",
+            databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
+            projectId: "unianchieta-a83bd",
+            storageBucket: "unianchieta-a83bd.firebasestorage.app",
+            messagingSenderId: "566413683292",
+            appId: "1:566413683292:web:0b274aaf669269c7041499",
+            measurementId: "G-G8DGTH92FJ"
+        };
+
+        // Inicializando o Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Variável para armazenar a referência ao mapa
+        let map;
+
+        // Função para inicializar o mapa
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: -23.561, lng: -46.662 }, // Centralizando o mapa
+                zoom: 16
+            });
+        }
+
+        // Função de busca no Firebase
+        function buscarDestino() {
+            const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
+            const destinoMsg = document.getElementById('destinoMsg');
+            const infoRota = document.getElementById('infoRota');
+            const infoAula = document.getElementById('infoAula');
+            const infoDetalhada = document.getElementById('infoDetalhada');
+            
+            // Limpar mensagens e informações anteriores
+            destinoMsg.textContent = '';
+            infoRota.textContent = '';
+            infoAula.textContent = '';
+            infoDetalhada.textContent = '';
+
+            // Verifica se a pesquisa não está vazia
+            if (pesquisa === '') {
+                destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
+                return;
+            }
+
+            const salasRef = db.ref('salas'); // Ref para as salas no Firebase
+            salasRef.orderByChild('nome').equalTo(pesquisa).once('value', snapshot => {
+                if (snapshot.exists()) {
+                    snapshot.forEach(childSnapshot => {
+                        const dados = childSnapshot.val();
+
+                        // Exibir as informações detalhadas da sala
+                        infoRota.textContent = `Rota para a sala: ${dados.nome}`;
+                        infoAula.textContent = `Curso/Disciplina: ${dados.disciplina}, Docente: ${dados.professor}`;
+                        
+                        // Informações detalhadas sobre a localização
+                        infoDetalhada.innerHTML = `
+                            <strong>Andar:</strong> ${dados.andar}<br>
+                            <strong>Prédio:</strong> ${dados.predio}<br>
+                            <strong>Horário:</strong> ${dados.horario}<br>
+                            <strong>Sala:</strong> ${dados.sala}<br>
+                            <strong>Como Chegar:</strong><br>
+                            - Dirija-se até o prédio ${dados.predio}.<br>
+                            - Suba até o ${dados.andar}º andar.<br>
+                            - A sala ${dados.sala} estará à sua direita/esquerda.<br>
+                            - O professor ${dados.professor} dará aula de ${dados.disciplina} nesse horário: ${dados.horario}.
+                        `;
+
+                        // Adicionar marcador no mapa
+                        const marker = new google.maps.Marker({
+                            position: { lat: dados.latitude, lng: dados.longitude },
+                            map: map,
+                            title: dados.nome
+                        });
+                        map.setCenter({ lat: dados.latitude, lng: dados.longitude }); // Centralizar o mapa no destino
+                    });
+                } else {
+                    destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
+                }
+            });
+        }
+
+        // Função de Admin (apenas um exemplo)
+        function abrirAdmin() {
+            alert('Área de administração ainda não configurada.');
+        }
     </script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
@@ -24,6 +116,9 @@
         <!-- Informações -->
         <p id="infoRota" class="mt-4 text-lg font-semibold"></p>
         <p id="infoAula" class="text-gray-700"></p>
+
+        <!-- Informações detalhadas da sala -->
+        <div id="infoDetalhada" class="mt-4 text-left text-gray-700"></div>
 
         <!-- Mapa -->
         <div id="map" class="mt-4 w-full h-64"></div>
