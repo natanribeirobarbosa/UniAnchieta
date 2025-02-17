@@ -98,6 +98,8 @@
             const get = window.firebaseGet;
 
             const salasRef = ref(db, 'salas');
+            console.log(salasRef);
+            
             try {
                 const snapshot = await get(salasRef);
 
