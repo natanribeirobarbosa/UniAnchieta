@@ -34,7 +34,11 @@
             const salas = [];
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                salas.push(data);  // Adiciona as salas no array
+                salas.push(data);
+                console.log(data);
+                console.log(salas);
+                // Exibe todas as informações da sala no console
+// Adiciona as salas no array
             });
 
             return salas;
