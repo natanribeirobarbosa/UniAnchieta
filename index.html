@@ -7,7 +7,7 @@
     <!-- Scripts do Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+        import { getDatabase, ref, get, child, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
         // Configuração do Firebase
         const firebaseConfig = {
@@ -21,7 +21,7 @@
             measurementId: "G-G8DGTH92FJ"
         };
 
-        // Inicializar Firebase
+        // Inicializando Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
@@ -56,14 +56,12 @@
                 return;
             }
 
-            // Referência à coleção 'salas' no Firebase Realtime Database
+            // Referência para as salas no Firebase
             const salasRef = ref(db, 'salas');
-
-            // Consultando a base de dados por palavras-chave (usando "keywords")
             const q = query(salasRef, orderByChild('keywords'), equalTo(pesquisa));
 
             try {
-                // Espera pela resposta da consulta
+                // Obtém os dados
                 const snapshot = await get(q);
 
                 if (snapshot.exists()) {
@@ -73,10 +71,9 @@
                         console.log(data["keywords"]);
                         console.log(typeof data.keywords);
 
+                        // Criar item na lista
                         const item = document.createElement("li");
                         item.className = "border-b p-2";
-
-                        // Defina o conteúdo diretamente
                         item.innerHTML = `
                             <strong>${data["predio "]} - ${data["andar "]} - Sala ${data["sala "]}</strong><br>
                             <span>${data["curso "]} | ${data["disciplina "]}</span><br>
@@ -99,11 +96,6 @@
                 console.error('Erro ao buscar destino:', error);
                 destinoMsg.textContent = 'Erro ao buscar destino.';
             }
-        }
-
-        // Função de Admin
-        window.abrirAdmin = function () {
-            alert('Área de administração ainda não configurada.');
         };
     </script>
 
