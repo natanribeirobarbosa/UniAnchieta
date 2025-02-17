@@ -27,55 +27,51 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        async function carregarRegistros() {
-            const lista = document.getElementById("listaRegistros");
-            lista.innerHTML = "";
-            const snapshot = await getDocs(collection(db, "salas"));
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const item = document.createElement("li");
-                item.className = "border-b p-2 cursor-pointer";
-                item.innerHTML = `
-                    <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
-                    <span>${data.curso} | ${data.disciplina}</span><br>
-                    <small>${data.docente} - ${data.horario}</small>
-                `;
-                item.onclick = function() {
-                    exibirDetalhes(data);
-                };
-                lista.appendChild(item);
-            });
+        async function obterCoordenadas(endereco) {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`);
+            const data = await response.json();
+            if (data.length > 0) {
+                return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) };
+            } else {
+                return null;
+            }
         }
 
-        function exibirDetalhes(data) {
+        async function exibirDetalhes(data) {
             const detalhesElemento = document.getElementById("detalhes");
             if (!detalhesElemento) return;
 
             document.getElementById("detalhesTitulo").innerHTML = `${data.predio} - Sala ${data.sala} (${data.curso})`;
             document.getElementById("detalhesDescricao").innerHTML = `Disciplina: ${data.disciplina}<br>Docente: ${data.docente}<br>Horário: ${data.horario}`;
             
+            let coordenadas = data.latitude && data.longitude ? { latitude: data.latitude, longitude: data.longitude } : await obterCoordenadas(data.predio);
+            if (!coordenadas) {
+                alert("Erro: Não foi possível obter a localização do destino.");
+                return;
+            }
+            
             const mapa = document.getElementById("detalhesMapa");
             mapa.innerHTML = "<div id='map' style='width: 100%; height: 400px;'></div>";
             
             setTimeout(() => {
-                const map = L.map('map').setView([data.latitude, data.longitude], 15);
+                const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
 
-                const destinoMarker = L.marker([data.latitude, data.longitude]).addTo(map)
+                const destinoMarker = L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
                     .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
 
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const { latitude, longitude } = position.coords;
-                        const userMarker = L.marker([latitude, longitude]).addTo(map)
+                        L.marker([latitude, longitude]).addTo(map)
                             .bindPopup("Você está aqui").openPopup();
 
-                        const rota = L.polyline([
+                        L.polyline([
                             [latitude, longitude],
-                            [data.latitude, data.longitude]
-                        ], {color: 'blue'}).addTo(map);
+                            [coordenadas.latitude, coordenadas.longitude]
+                        ], { color: 'blue' }).addTo(map);
                     },
                     () => {
                         alert("Não foi possível obter sua localização.");
