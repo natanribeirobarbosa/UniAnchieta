@@ -7,7 +7,7 @@
     <!-- Scripts do Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, get, child, onSnapshot} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
         // Configuração do Firebase
         const firebaseConfig = {
@@ -23,10 +23,12 @@
 
         // Inicializar o Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        window.db = getDatabase(app); // Torna o banco acessível globalmente
+    </script>
 
-        // Função para inicializar o mapa
+    <script>
         let map;
+        
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: -23.561, lng: -46.662 },
@@ -34,89 +36,77 @@
             });
         }
 
-        // Função para buscar destino
-      window.buscarDestino = async function() {
-    const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
-    const destinoMsg = document.getElementById('destinoMsg');
-    const infoRota = document.getElementById('infoRota');
-    const infoAula = document.getElementById('infoAula');
-    const infoDetalhada = document.getElementById('infoDetalhada');
+        window.buscarDestino = async function() {
+            const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
+            const destinoMsg = document.getElementById('destinoMsg');
+            const infoDetalhada = document.getElementById('infoDetalhada');
+            const lista = document.getElementById('lista'); // Adicione um elemento <ul id="lista"></ul> no HTML
 
-    // Limpar mensagens anteriores
-    destinoMsg.textContent = '';
-    infoRota.textContent = '';
-    infoAula.textContent = '';
-    infoDetalhada.textContent = '';
+            // Limpar mensagens anteriores
+            destinoMsg.textContent = '';
+            infoDetalhada.innerHTML = '';
+            lista.innerHTML = '';
 
-    // Verifica se a pesquisa não está vazia
-    if (pesquisa === '') {
-        destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
-        return;
-    }
-
-    // Referência para as salas no Firebase (sem filtro direto)
-    const salasRef = ref(db, 'salas');
-    try {
-        // Obtém todos os dados das salas (substituindo o onSnapshot por get)
-        const snapshot = await get(salasRef);
-
-        if (snapshot.exists()) {
-            let encontrouResultado = false;
-
-            snapshot.forEach((childSnapshot) => {
-                const data = childSnapshot.val();
-                console.log(data);
-                console.log(data["keywords"]);
-
-                // Filtra pela pesquisa nas keywords após buscar todas as salas
-                const keywords = data["keywords"] || [];
-                const palavrasChave = keywords.map(k => k.toLowerCase());
-
-                if (palavrasChave.some(k => k.includes(pesquisa))) {
-                    encontrouResultado = true;
-
-                    // Criar item na lista
-                    const item = document.createElement("li");
-                    item.className = "border-b p-2";
-                    item.innerHTML = `
-                        <strong>${data["predio "]} - ${data["andar "]} - Sala ${data["sala "]}</strong><br>
-                        <span>${data["curso "]} | ${data["disciplina "]}</span><br>
-                        <small>${data["docente "]} - ${data["horario "]}</small>
-                    `;
-                    lista.appendChild(item);
-
-                    // Exibindo no mapa
-                    const marker = new google.maps.Marker({
-                        position: { lat: data.latitude, lng: data.longitude },
-                        map: map,
-                        title: data["sala "],
-                    });
-                    map.setCenter({ lat: data.latitude, lng: data.longitude });
-                }
-            });
-
-            if (!encontrouResultado) {
-                destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
+            if (pesquisa === '') {
+                destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
+                return;
             }
-        } else {
-            destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
-        }
-    } catch (error) {
-        console.error('Erro ao buscar destino:', error);
-        destinoMsg.textContent = 'Erro ao buscar destino.';
-    }
-};
 
+            const salasRef = ref(window.db, 'salas');
+            try {
+                const snapshot = await get(salasRef);
+
+                if (snapshot.exists()) {
+                    let encontrouResultado = false;
+
+                    snapshot.forEach((childSnapshot) => {
+                        const data = childSnapshot.val();
+                        const keywords = data["keywords"] || [];
+                        const palavrasChave = keywords.map(k => k.toLowerCase());
+
+                        if (palavrasChave.some(k => k.includes(pesquisa))) {
+                            encontrouResultado = true;
+
+                            // Criar item na lista
+                            const item = document.createElement("li");
+                            item.className = "border-b p-2";
+                            item.innerHTML = `
+                                <strong>${data["predio"]} - ${data["andar"]} - Sala ${data["sala"]}</strong><br>
+                                <span>${data["curso"]} | ${data["disciplina"]}</span><br>
+                                <small>${data["docente"]} - ${data["horario"]}</small>
+                            `;
+                            lista.appendChild(item);
+
+                            // Exibir no mapa
+                            const marker = new google.maps.Marker({
+                                position: { lat: data.latitude, lng: data.longitude },
+                                map: map,
+                                title: data["sala"],
+                            });
+                            map.setCenter({ lat: data.latitude, lng: data.longitude });
+                        }
+                    });
+
+                    if (!encontrouResultado) {
+                        destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
+                    }
+                } else {
+                    destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
+                }
+            } catch (error) {
+                console.error('Erro ao buscar destino:', error);
+                destinoMsg.textContent = 'Erro ao buscar destino.';
+            }
+        };
 
         document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById("pesquisa").addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
-            buscarDestino();
-        }
-    });
-});
+            document.getElementById("pesquisa").addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+                    window.buscarDestino();
+                }
+            });
+        });
 
-        // Função de Admin (exemplo de página administrativa)
         window.abrirAdmin = function () {
             alert('Área de administração ainda não configurada.');
         };
@@ -132,24 +122,23 @@
         
         <!-- Pesquisa -->
         <input type="text" id="pesquisa" placeholder="Digite a sala, professor ou disciplina" class="border p-2 w-full rounded">
-        <button onclick="" class="bg-green-500 text-white px-4 py-2 rounded mt-2 w-full hover:bg-green-700">
+        <button onclick="window.buscarDestino()" class="bg-green-500 text-white px-4 py-2 rounded mt-2 w-full hover:bg-green-700">
             Buscar
         </button>
         <p id="destinoMsg" class="mt-2 text-red-500"></p>
 
-        <!-- Informações -->
-        <p id="infoRota" class="mt-4 text-lg font-semibold"></p>
-        <p id="infoAula" class="text-gray-700"></p>
-
-        <!-- Informações detalhadas da sala -->
+        <!-- Informações detalhadas -->
         <div id="infoDetalhada" class="mt-4 text-left text-gray-700"></div>
+
+        <!-- Lista de resultados -->
+        <ul id="lista" class="mt-4 text-left text-gray-700"></ul>
 
         <!-- Mapa -->
         <div id="map" class="mt-4 w-full h-64"></div>
     </div>
 
     <!-- Botão de Admin -->
-    <button onclick="abrirAdmin()" class="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded">
+    <button onclick="window.abrirAdmin()" class="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded">
         Admin
     </button>
 </body>
