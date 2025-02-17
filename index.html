@@ -76,74 +76,71 @@
             });
         }
 
-        window.buscarDestino = async function() {
-            const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
-            const destinoMsg = document.getElementById('destinoMsg');
-            const infoRota = document.getElementById('infoRota');
-            const infoAula = document.getElementById('infoAula');
-            const infoDetalhada = document.getElementById('infoDetalhada');
+      window.buscarDestino = async function() {
+    const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
+    const destinoMsg = document.getElementById('destinoMsg');
+    const infoRota = document.getElementById('infoRota');
+    const infoAula = document.getElementById('infoAula');
+    const infoDetalhada = document.getElementById('infoDetalhada');
 
-            destinoMsg.textContent = '';
-            infoRota.textContent = '';
-            infoAula.textContent = '';
-            infoDetalhada.textContent = '';
+    // Limpa as mensagens anteriores
+    destinoMsg.textContent = '';
+    infoRota.textContent = '';
+    infoAula.textContent = '';
+    infoDetalhada.textContent = '';
 
-            if (pesquisa === '') {
-                destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
-                return;
-            }
+    // Valida se a pesquisa foi feita
+    if (pesquisa === '') {
+        destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
+        return;
+    }
 
-            const db = window.firebaseDB;
+    try {
+        // Refere-se à coleção de "salas" no Firestore
+        const salasRef = collection(db, "salas");
+        const snapshot = await getDocs(salasRef);
+        
+        let encontrouResultado = false;
 
-            // Corrigido: Uso do Firestore corretamente
-            const salasRef = collection(db, "salas");  // Aqui você usa Firestore
-            const snapshot = await getDocs(salasRef);
-            
-            try {
-                if (snapshot.empty) {
-                    destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
-                    return;
-                }
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const keywords = data.keywords || [];
 
-                let encontrouResultado = false;
+            // Verifica se alguma palavra-chave corresponde à pesquisa
+            if (keywords.some(keyword => keyword.includes(pesquisa))) {
+                encontrouResultado = true;
 
-                snapshot.forEach((doc) => {
-                    const data = doc.data();  // Acessa os dados do documento corretamente
-                    const keywords = data["keywords"] || [];
-                    const palavrasChave = keywords.map(k => k.toLowerCase());
+                // Exibindo informações da sala
+                const item = document.createElement("li");
+                item.className = "border-b p-2";
+                item.innerHTML = `
+                    <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
+                    <span>${data.curso} | ${data.disciplina}</span><br>
+                    <small>${data.docente} - ${data.horario}</small>
+                `;
+                infoDetalhada.appendChild(item);
 
-                    if (palavrasChave.some(k => k.includes(pesquisa))) {
-                        encontrouResultado = true;
-
-                        // Criar item na lista
-                        const item = document.createElement("li");
-                        item.className = "border-b p-2";
-                        item.innerHTML = `
-                            <strong>${data["predio "]} - ${data["andar "]} - Sala ${data["sala "]}</strong><br>
-                            <span>${data["curso "]} | ${data["disciplina "]}</span><br>
-                            <small>${data["docente "]} - ${data["horario "]}</small>
-                        `;
-                        document.getElementById("infoDetalhada").appendChild(item);
-
-                        // Exibindo no mapa
-                        const marker = new google.maps.Marker({
-                            position: { lat: data.latitude, lng: data.longitude },
-                            map: map,
-                            title: data["sala "],
-                        });
-                        map.setCenter({ lat: data.latitude, lng: data.longitude });
-                    }
+                // Exibindo o marcador no mapa
+                const marker = new google.maps.Marker({
+                    position: { lat: data.latitude, lng: data.longitude },
+                    map: map,
+                    title: data.sala,
                 });
-
-                if (!encontrouResultado) {
-                    destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
-                }
-
-            } catch (error) {
-                console.error('Erro ao buscar destino:', error);
-                destinoMsg.textContent = 'Erro ao buscar destino.';
+                map.setCenter({ lat: data.latitude, lng: data.longitude });
             }
-        };
+        });
+
+        // Se não encontrar resultado, exibe uma mensagem
+        if (!encontrouResultado) {
+            destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
+        }
+
+    } catch (error) {
+        console.error('Erro ao buscar destino:', error);
+        destinoMsg.textContent = 'Erro ao buscar destino.';
+    }
+};
+
 
         window.abrirAdmin = function() {
             window.location.href = "https://natanribeirobarbosa.github.io/UniAnchieta/admin.html";
