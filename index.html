@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa UniAnchieta</title>
     <!-- Scripts do Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-    
-    <!-- Google Maps -->
-    <script async src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&callback=initMap"></script>
-    <script defer>
-        // Configuração do Firebase com suas credenciais
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
             authDomain: "unianchieta-a83bd.firebaseapp.com",
@@ -23,52 +21,52 @@
             measurementId: "G-G8DGTH92FJ"
         };
 
-        // Inicializando o Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-        // Variável para armazenar a referência ao mapa
+        // Variável do mapa
         let map;
 
         // Função para inicializar o mapa
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
-                center: { lat: -23.561, lng: -46.662 }, // Centralizando o mapa
+                center: { lat: -23.561, lng: -46.662 },
                 zoom: 16
             });
         }
 
-        // Função de busca no Firebase
-        function buscarDestino() {
+        // Função para buscar destino
+        window.buscarDestino = async function () {
             const pesquisa = document.getElementById('pesquisa').value.trim().toLowerCase();
             const destinoMsg = document.getElementById('destinoMsg');
             const infoRota = document.getElementById('infoRota');
             const infoAula = document.getElementById('infoAula');
             const infoDetalhada = document.getElementById('infoDetalhada');
-            
+
             // Limpar mensagens e informações anteriores
             destinoMsg.textContent = '';
             infoRota.textContent = '';
             infoAula.textContent = '';
             infoDetalhada.textContent = '';
 
-            // Verifica se a pesquisa não está vazia
-            if (pesquisa === '') {
+            if (!pesquisa) {
                 destinoMsg.textContent = 'Por favor, digite algo para pesquisar.';
                 return;
             }
 
-            const salasRef = db.ref('salas'); // Ref para as salas no Firebase
-            salasRef.orderByChild('nome').equalTo(pesquisa).once('value', snapshot => {
+            // Consulta ao Firebase
+            const salasRef = ref(db, 'salas');
+            const salasQuery = query(salasRef, orderByChild('nome'), equalTo(pesquisa));
+
+            try {
+                const snapshot = await get(salasQuery);
                 if (snapshot.exists()) {
                     snapshot.forEach(childSnapshot => {
                         const dados = childSnapshot.val();
 
-                        // Exibir as informações detalhadas da sala
                         infoRota.textContent = `Rota para a sala: ${dados.nome}`;
                         infoAula.textContent = `Curso/Disciplina: ${dados.disciplina}, Docente: ${dados.professor}`;
-                        
-                        // Informações detalhadas sobre a localização
                         infoDetalhada.innerHTML = `
                             <strong>Andar:</strong> ${dados.andar}<br>
                             <strong>Prédio:</strong> ${dados.predio}<br>
@@ -82,24 +80,31 @@
                         `;
 
                         // Adicionar marcador no mapa
-                        const marker = new google.maps.Marker({
+                        new google.maps.Marker({
                             position: { lat: dados.latitude, lng: dados.longitude },
                             map: map,
                             title: dados.nome
                         });
-                        map.setCenter({ lat: dados.latitude, lng: dados.longitude }); // Centralizar o mapa no destino
+
+                        map.setCenter({ lat: dados.latitude, lng: dados.longitude });
                     });
                 } else {
                     destinoMsg.textContent = 'Nenhum destino encontrado para a pesquisa.';
                 }
-            });
-        }
+            } catch (error) {
+                console.error('Erro ao buscar destino:', error);
+                destinoMsg.textContent = 'Erro ao buscar destino. Tente novamente.';
+            }
+        };
 
-        // Função de Admin (apenas um exemplo)
-        function abrirAdmin() {
+        // Função de Admin
+        window.abrirAdmin = function () {
             alert('Área de administração ainda não configurada.');
-        }
+        };
     </script>
+
+    <!-- Google Maps -->
+    <script async src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&callback=initMap"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="flex flex-col items-center justify-center h-screen bg-gray-100">
