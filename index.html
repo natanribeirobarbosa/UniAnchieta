@@ -63,6 +63,18 @@
                 }).addTo(map);
                 L.marker([-23.55052, -46.633308]).addTo(map)
                     .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        map.setView([latitude, longitude], 15);
+                        L.marker([latitude, longitude]).addTo(map)
+                            .bindPopup("Você está aqui").openPopup();
+                    },
+                    () => {
+                        alert("Não foi possível obter sua localização.");
+                    }
+                );
             }, 200);
             detalhesElemento.style.display = "block";
         }
