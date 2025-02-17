@@ -109,8 +109,9 @@
                     snapshot.forEach((childSnapshot) => {
                         const data = childSnapshot.val();
                         const keywords = data["keywords"] || [];
+                        console.log(keywords);
                         const palavrasChave = keywords.map(k => k.toLowerCase());
-
+                        console.log(palavrasChave);    
                         if (palavrasChave.some(k => k.includes(pesquisa))) {
                             encontrouResultado = true;
 
