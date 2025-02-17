@@ -14,28 +14,29 @@
     <!-- Firebase (módulo separado) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-        // Configuração do Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
-            authDomain: "unianchieta-a83bd.firebaseapp.com",
-            databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
-            projectId: "unianchieta-a83bd",
-            storageBucket: "unianchieta-a83bd.firebasestorage.app",
-            messagingSenderId: "566413683292",
-            appId: "1:566413683292:web:0b274aaf669269c7041499",
-            measurementId: "G-G8DGTH92FJ"
-        };
+// Configuração do Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
+    authDomain: "unianchieta-a83bd.firebaseapp.com",
+    databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
+    projectId: "unianchieta-a83bd",
+    storageBucket: "unianchieta-a83bd.firebasestorage.app",
+    messagingSenderId: "566413683292",
+    appId: "1:566413683292:web:0b274aaf669269c7041499",
+    measurementId: "G-G8DGTH92FJ"
+};
 
-        // Inicializa o Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+// Inicializa o Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);  // Corrigido para usar o Firestore
 
-        // Disponibiliza a referência do banco para o script global
-        window.firebaseDB = db;
-        window.firebaseRef = ref;
-        window.firebaseGet = get;
+// Disponibiliza a referência do banco para o script global
+window.firebaseDB = db;
+window.firebaseRef = ref;
+window.firebaseGet = get;
     </script>
 </head>
 <body class="flex flex-col items-center justify-center h-screen bg-gray-100">
