@@ -151,20 +151,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const lista = document.getElementById("listaRegistros");
     lista.innerHTML = "";
 
-    // Lista de prédios fixos
-    const prediosFixos = {
-        "prédio 1": { nome: "Prédio 1", latitude: -23.214433158266555, longitude: -46.89146281675962 },
-        "prédio 2": { nome: "Prédio 2", latitude: -23.21330932218799, longitude: -46.89255711603703 },
-        "prédio 3": { nome: "Prédio 3", latitude: -23.21381689404497, longitude: -46.892696577592055 }
-    };
+
 
     // Normalizar termo de busca (remover acentos e transformar para minúsculas)
     const termoNormalizado = removerAcentos(queryTermo);
       console.log(termoNormalizado);
 
     // Verificar se a pesquisa corresponde a um prédio fixo
-    if (prediosFixos[termoNormalizado]) {
-        const predio = prediosFixos[termoNormalizado];
+    if (coordenadasLocais[termoNormalizado]) {
+        const predio = coordenadasLocais[termoNormalizado];
         const item = document.createElement("li");
         item.className = "border-b p-2 cursor-pointer font-bold bg-gray-200";
         item.innerHTML = `<strong>${predio.nome}</strong> - Clique para ver no mapa`;
