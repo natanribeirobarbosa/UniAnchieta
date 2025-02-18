@@ -124,41 +124,67 @@
 });
 
 
-        async function pesquisar() {
-            const queryTermo = document.getElementById("pesquisa").value.toLowerCase().trim();
-            if (queryTermo === "") return alert("Digite um termo de pesquisa!");
+        // Função para remover acentos
+function removerAcentos(texto) {
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
 
-            const lista = document.getElementById("listaRegistros");
-            lista.innerHTML = "";
-            const snapshot = await getDocs(collection(db, "salas"));
-            let resultados = [];
+async function pesquisar() {
+    let queryTermo = document.getElementById("pesquisa").value.trim();
+    if (queryTermo === "") return alert("Digite um termo de pesquisa!");
 
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.keywords.some(keyword => keyword.includes(queryTermo))) {
-                    resultados.push(data);
-                }
+    queryTermo = removerAcentos(queryTermo); // Remove acentos e transforma em minúsculas
+
+    const lista = document.getElementById("listaRegistros");
+    lista.innerHTML = "";
+
+    let resultados = [];
+
+    // Verificar se o termo pesquisado corresponde a um prédio
+    for (let predio in coordenadasLocais) {
+        if (removerAcentos(predio) === queryTermo) {
+            resultados.push({
+                predio: predio,
+                sala: "N/A",
+                curso: "Localização",
+                disciplina: "N/A",
+                docente: "N/A",
+                horario: "N/A"
             });
-
-            if (resultados.length > 0) {
-                resultados.forEach(data => {
-                    const item = document.createElement("li");
-                    item.className = "border-b p-2 cursor-pointer";
-                    item.innerHTML = `
-                      <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
-                        <span>${data.curso} | ${data.disciplina}</span><br>
-                        <small>${data.docente} - ${data.horario}</small>
-                    `;
-                    item.onclick = function() {
-                        exibirDetalhes(data);
-                    };
-                    lista.appendChild(item);
-                });
-            } else {
-                lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
-            }
-            lista.style.display = "block";
+            break; // Garante que o prédio apareça sozinho no topo
         }
+    }
+
+    // Buscar os demais resultados no Firestore
+    const snapshot = await getDocs(collection(db, "salas"));
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.keywords.some(keyword => removerAcentos(keyword).includes(queryTermo))) {
+            resultados.push(data);
+        }
+    });
+
+    // Exibir os resultados na interface
+    if (resultados.length > 0) {
+        resultados.forEach(data => {
+            const item = document.createElement("li");
+            item.className = "border-b p-2 cursor-pointer";
+            item.innerHTML = `
+                <strong>${data.predio} - ${data.sala !== "N/A" ? `Sala ${data.sala}` : ""}</strong><br>
+                <span>${data.curso !== "N/A" ? data.curso : ""}</span><br>
+                <small>${data.docente !== "N/A" ? data.docente + " - " + data.horario : ""}</small>
+            `;
+            item.onclick = function () {
+                exibirDetalhes(data);
+            };
+            lista.appendChild(item);
+        });
+    } else {
+        lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
+    }
+    lista.style.display = "block";
+}
 
         window.pesquisar = pesquisar;
     </script>
