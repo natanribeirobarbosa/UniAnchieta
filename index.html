@@ -75,6 +75,36 @@
             detalhesElemento.style.display = "block";
         }
 
+        document.addEventListener("DOMContentLoaded", function () {
+    const mapaInicialDiv = document.getElementById("mapaInicial");
+
+    // Criar o mapa com uma posição inicial padrão
+    const map = L.map(mapaInicialDiv).setView([-23.214, -46.892], 15);
+    
+    // Adicionar camada de mapa do OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Obter localização do usuário
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
+            
+            // Centralizar o mapa na localização do usuário
+            map.setView([latitude, longitude], 17);
+            
+            // Adicionar um marcador na posição atual do usuário
+            L.marker([latitude, longitude]).addTo(map)
+                .bindPopup("Você está aqui").openPopup();
+        },
+        () => {
+            alert("Não foi possível obter sua localização.");
+        }
+    );
+});
+
+
         async function pesquisar() {
             const queryTermo = document.getElementById("pesquisa").value.toLowerCase().trim();
             if (queryTermo === "") return alert("Digite um termo de pesquisa!");
@@ -117,6 +147,8 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="flex flex-col items-center bg-gray-100 h-screen p-6">
+    <div id="mapaInicial" class="w-full max-w-2xl h-96 mt-6 shadow-md rounded"></div>
+
     <h1 class="text-2xl font-bold mb-4">Pesquisa de Localização - UniAnchieta</h1>
     <input type="text" id="pesquisa" class="border w-full p-2 mb-3" placeholder="Pesquise por palavras-chave...">
     <button onclick="pesquisar()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">Pesquisar</button>
