@@ -130,40 +130,49 @@
 
 
         async function pesquisar() {
-            const queryTermo = document.getElementById("pesquisa").value.toLowerCase().trim();
-            if (queryTermo === "") return alert("Digite um termo de pesquisa!");
+    const queryTermo = document.getElementById("pesquisa").value.trim();
+    if (queryTermo === "") return alert("Digite um termo de pesquisa!");
 
-            const lista = document.getElementById("listaRegistros");
-            lista.innerHTML = "";
-            const snapshot = await getDocs(collection(db, "salas"));
-            let resultados = [];
+    const lista = document.getElementById("listaRegistros");
+    lista.innerHTML = "";
+    
+    const snapshot = await getDocs(collection(db, "salas"));
+    let resultados = [];
 
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.keywords.some(keyword => keyword.includes(queryTermo))) {
-                    resultados.push(data);
-                }
-            });
+    // Normalizar termo de busca
+    const termoNormalizado = removerAcentos(queryTermo);
 
-            if (resultados.length > 0) {
-                resultados.forEach(data => {
-                    const item = document.createElement("li");
-                    item.className = "border-b p-2 cursor-pointer";
-                    item.innerHTML = `
-                      <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
-                        <span>${data.curso} | ${data.disciplina}</span><br>
-                        <small>${data.docente} - ${data.horario}</small>
-                    `;
-                    item.onclick = function() {
-                        exibirDetalhes(data);
-                    };
-                    lista.appendChild(item);
-                });
-            } else {
-                lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
-            }
-            lista.style.display = "block";
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        
+        // Normalizar palavras-chave do banco de dados
+        const keywordsNormalizadas = data.keywords.map(k => removerAcentos(k));
+
+        if (keywordsNormalizadas.some(keyword => keyword.includes(termoNormalizado))) {
+            resultados.push(data);
         }
+    });
+
+    if (resultados.length > 0) {
+        resultados.forEach(data => {
+            const item = document.createElement("li");
+            item.className = "border-b p-2 cursor-pointer";
+            item.innerHTML = `
+                <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
+                <span>${data.curso} | ${data.disciplina}</span><br>
+                <small>${data.docente} - ${data.horario}</small>
+            `;
+            item.onclick = function() {
+                exibirDetalhes(data);
+            };
+            lista.appendChild(item);
+        });
+    } else {
+        lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
+    }
+    lista.style.display = "block";
+}
+
 
         window.pesquisar = pesquisar;
     </script>
