@@ -212,11 +212,21 @@
             }, 300);
         }
 
+// Definir coordenadas globais dos prédios
+window.coordenadasLocais = {
+    "Prédio 1": { latitude: -23.214433, longitude: -46.891462 },
+    "Prédio 2": { latitude: -23.213309, longitude: -46.892557 },
+    "Prédio 3": { latitude: -23.213816, longitude: -46.892696 }
+};
+
+        
 // Função global para remover acentos e normalizar texto
 window.removerAcentos = function (texto) {
     return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 };
 
+
+        
         
         window.pesquisar = async function () {
     let queryTermo = document.getElementById("pesquisa").value.trim();
