@@ -129,6 +129,10 @@
 });
 
 
+        function removerAcentos(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
         async function pesquisar() {
     const queryTermo = document.getElementById("pesquisa").value.trim();
     if (queryTermo === "") return alert("Digite um termo de pesquisa!");
