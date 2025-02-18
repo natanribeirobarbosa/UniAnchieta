@@ -12,7 +12,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
     <style>
-        /* Impedir rolagem e garantir que tudo se encaixe */
+        /* Impedir rolagem */
         html, body {
             overflow: hidden;
             height: 100%;
@@ -21,7 +21,7 @@
             padding: 0;
         }
 
-        /* Garantir que todo o conteúdo principal se ajuste à tela */
+        /* Ajustar o container principal */
         .container {
             display: flex;
             flex-direction: column;
@@ -33,18 +33,31 @@
             box-sizing: border-box;
         }
 
+        /* Ajustar a lista de resultados */
+        #listaRegistros {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            max-height: 30vh;
+            display: none;
+        }
+
         /* Ajuste do modal */
         #modalMapa {
             position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.7);
-            display: none; /* Inicialmente escondido */
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
 
-        /* Ajuste do conteúdo do modal */
+        /* Conteúdo do modal */
         #modalMapa > div {
             width: 90%;
             max-width: 500px;
@@ -59,7 +72,7 @@
             position: relative;
         }
 
-        /* Ajustar botão de fechar */
+        /* Botão de fechar */
         #fecharModal {
             position: absolute;
             top: 10px;
@@ -78,34 +91,12 @@
             justify-content: center;
         }
 
-        /* Ajuste do mapa */
+        /* Ajustar o mapa */
         #mapContainer {
             width: 100%;
             height: 50vh;
             border-radius: 8px;
             overflow: hidden;
-        }
-
-        /* Responsividade do input e botão */
-        .input-container {
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        /* Responsividade da lista de resultados */
-        #listaRegistros {
-            width: 100%;
-            max-width: 500px;
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            overflow-y: auto;
-            max-height: 25vh;
-            display: none; /* Esconder até ter resultados */
         }
     </style>
 </head>
@@ -154,7 +145,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Definir coordenadas globais dos prédios
+        // Coordenadas dos prédios
         const coordenadasLocais = {
             "Prédio 1": { latitude: -23.214433, longitude: -46.891462 },
             "Prédio 2": { latitude: -23.213309, longitude: -46.892557 },
@@ -166,7 +157,7 @@
             return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
         }
 
-        // Criar mapa inicial ao carregar a página
+        // Criar mapa inicial
         document.addEventListener("DOMContentLoaded", function () {
             const mapaInicialDiv = document.getElementById("mapaInicial");
 
@@ -176,26 +167,12 @@
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
-
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        map.setView([latitude, longitude], 17);
-
-                        L.marker([latitude, longitude]).addTo(map)
-                            .bindPopup("Você está aqui").openPopup();
-                    },
-                    () => {
-                        alert("Não foi possível obter sua localização.");
-                    }
-                );
             }, 500);
         });
 
         // Fechar modal
         document.getElementById("fecharModal").addEventListener("click", function () {
             document.getElementById("modalMapa").style.display = "none";
-            document.getElementById("mapaInicial").classList.remove("hidden");
         });
 
         // Função de pesquisa
@@ -211,13 +188,6 @@
 
             let resultados = [];
 
-            for (let predio in coordenadasLocais) {
-                if (removerAcentos(predio) === queryTermo) {
-                    resultados.push({ predio, sala: "N/A", curso: "Localização" });
-                    break;
-                }
-            }
-
             const snapshot = await getDocs(collection(db, "salas"));
 
             snapshot.forEach(doc => {
@@ -227,9 +197,20 @@
                 }
             });
 
-            lista.innerHTML = resultados.length > 0
-                ? resultados.map(data => `<li>${data.predio} - ${data.sala || "N/A"}</li>`).join("")
-                : "<li>Nenhum resultado encontrado</li>";
+            if (resultados.length > 0) {
+                lista.innerHTML = "";
+                resultados.forEach(data => {
+                    const item = document.createElement("li");
+                    item.className = "border-b p-2 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-lg p-3";
+                    item.innerHTML = `<strong>${data.predio} - Sala ${data.sala}</strong><br>${data.curso}<br><small>${data.docente} - ${data.horario}</small>`;
+                    item.onclick = function () {
+                        exibirDetalhes(data);
+                    };
+                    lista.appendChild(item);
+                });
+            } else {
+                lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
+            }
         }
 
         window.pesquisar = pesquisar;
