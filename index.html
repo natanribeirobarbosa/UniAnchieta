@@ -38,7 +38,7 @@
 });
 
 
-      function exibirDetalhes(data) {
+  function exibirDetalhes(data) {
     const modal = document.getElementById("modalMapa");
     const modalTitulo = document.getElementById("modalTitulo");
     const mapContainer = document.getElementById("mapContainer");
@@ -52,45 +52,69 @@
     // Exibir o modal
     modal.classList.remove("hidden");
 
-    // Buscar coordenadas do prédio correto
-    const coordenadas = coordenadasLocais[data.predio];
+    // Remover acentos do nome do prédio antes de buscar coordenadas
+    const predioSemAcento = removerAcentos(data.predio);
 
-    // Se não encontrar, exibir erro e não continuar
+    // Buscar coordenadas do prédio correto
+    let coordenadas = null;
+    for (let key in coordenadasLocais) {
+        if (removerAcentos(key) === predioSemAcento) {
+            coordenadas = coordenadasLocais[key];
+            break;
+        }
+    }
+
+    // Se não encontrar, exibir erro
     if (!coordenadas) {
-        alert("Erro: Coordenadas do prédio não encontradas!");
+        alert(`Erro: Coordenadas do prédio "${data.predio}" não encontradas!`);
         return;
     }
 
-    setTimeout(() => {
-        const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
+    // Obter localização do usuário
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+            // Calcular a diferença de distância entre usuário e prédio
+            const diferencaLat = Math.abs(latitude - coordenadas.latitude);
+            const diferencaLng = Math.abs(longitude - coordenadas.longitude);
 
-        L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
-            .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
+            // Definir um raio de proximidade (aprox. 30 metros)
+            const limiteProximidade = 0.00027; 
 
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
-                
-                // Adiciona um marcador na localização do usuário
+            if (diferencaLat < limiteProximidade && diferencaLng < limiteProximidade) {
+                alert(`Você já está no ${data.predio}!\n\nSala: ${data.sala}\nCurso: ${data.curso}\nDisciplina: ${data.disciplina}\nDocente: ${data.docente}\nHorário: ${data.horario}`);
+                return;
+            }
+
+            // Se a pessoa NÃO estiver no prédio, traçar a rota
+            setTimeout(() => {
+                const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
+                    .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
+
+                // Marcar a posição do usuário
                 L.marker([latitude, longitude]).addTo(map)
                     .bindPopup("Você está aqui").openPopup();
 
-                // Traçar a rota corretamente para o prédio selecionado
+                // Traçar rota do usuário até o prédio
                 L.polyline([
                     [latitude, longitude],
                     [coordenadas.latitude, coordenadas.longitude]
                 ], { color: 'blue' }).addTo(map);
-            },
-            () => {
-                alert("Não foi possível obter sua localização.");
-            }
-        );
-    }, 200);
+            }, 200);
+        },
+        () => {
+            alert("Não foi possível obter sua localização.");
+        }
+    );
 }
+
 
 
 
