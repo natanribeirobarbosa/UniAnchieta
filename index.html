@@ -38,7 +38,7 @@
 });
 
 
-      function exibirDetalhes(data) {
+     function exibirDetalhes(data) {
     const modal = document.getElementById("modalMapa");
     const modalTitulo = document.getElementById("modalTitulo");
     const mapContainer = document.getElementById("mapContainer");
@@ -52,12 +52,16 @@
     // Exibir o modal
     modal.classList.remove("hidden");
 
+    // Normalizar nome do prédio (removendo espaços extras e padronizando letras)
+    const predioFormatado = data.predio.trim();
+
     // Buscar coordenadas do prédio correto
-    const coordenadas = coordenadasLocais[data.predio];
+    const coordenadas = coordenadasLocais[predioFormatado];
 
     // Se não encontrar, exibir erro e não continuar
     if (!coordenadas) {
-        alert("Erro: Coordenadas do prédio não encontradas!");
+        console.error(`Erro: Coordenadas do prédio '${predioFormatado}' não encontradas!`);
+        alert(`Erro: Coordenadas do prédio '${predioFormatado}' não encontradas!`);
         return;
     }
 
@@ -74,7 +78,7 @@
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
-                
+
                 // Adiciona um marcador na localização do usuário
                 L.marker([latitude, longitude]).addTo(map)
                     .bindPopup("Você está aqui").openPopup();
@@ -91,6 +95,7 @@
         );
     }, 200);
 }
+
 
 
 
