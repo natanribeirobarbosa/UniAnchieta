@@ -217,70 +217,50 @@ html, body {
         }
     }
 
-    function exibirDetalhes(data) {
-        const modal = document.getElementById("modalMapa");
-        const modalTitulo = document.getElementById("modalTitulo");
-        const mapContainer = document.getElementById("mapContainer");
+function exibirDetalhes(data) {
+    const modal = document.getElementById("modalMapa");
+    const modalTitulo = document.getElementById("modalTitulo");
+    const mapContainer = document.getElementById("mapContainer");
+    const mapaInicialDiv = document.getElementById("mapaInicial");
 
-        modalTitulo.innerHTML = `${data.predio} - Sala ${data.sala} (${data.curso})`;
+    // Esconder o mapa inicial para evitar sobreposição
+    mapaInicialDiv.classList.add("hidden-map");
 
-        mapContainer.innerHTML = "<div id='map' class='w-full h-96'></div>";
+    // Definir título do modal
+    modalTitulo.innerHTML = `${data.predio} - Sala ${data.sala} (${data.curso})`;
 
-        modal.classList.remove("hidden");
+    // Limpar e recriar o mapa dentro do modal
+    mapContainer.innerHTML = "<div id='map' class='w-full h-full'></div>";
 
-        const predioSemAcento = removerAcentos(data.predio);
+    // Exibir o modal
+    modal.classList.remove("hidden");
 
-        let coordenadas = null;
-        for (let key in coordenadasLocais) {
-            if (removerAcentos(key) === predioSemAcento) {
-                coordenadas = coordenadasLocais[key];
-                break;
-            }
-        }
-
-        if (!coordenadas) {
-            alert(`Erro: Coordenadas do prédio "${data.predio}" não encontradas!`);
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
-
-                const diferencaLat = Math.abs(latitude - coordenadas.latitude);
-                const diferencaLng = Math.abs(longitude - coordenadas.longitude);
-
-                const limiteProximidade = 0.00027;
-
-                if (diferencaLat < limiteProximidade && diferencaLng < limiteProximidade) {
-                    alert(`Você já está no ${data.predio}!\n\nSala: ${data.sala}\nCurso: ${data.curso}\nDisciplina: ${data.disciplina}\nDocente: ${data.docente}\nHorário: ${data.horario}`);
-                    return;
-                }
-
-                setTimeout(() => {
-                    const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
-
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; OpenStreetMap contributors'
-                    }).addTo(map);
-
-                    L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
-                        .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
-
-                    L.marker([latitude, longitude]).addTo(map)
-                        .bindPopup("Você está aqui").openPopup();
-
-                    L.polyline([
-                        [latitude, longitude],
-                        [coordenadas.latitude, coordenadas.longitude]
-                    ], { color: 'blue' }).addTo(map);
-                }, 200);
-            },
-            () => {
-                alert("Não foi possível obter sua localização.");
-            }
-        );
+    const coordenadas = coordenadasLocais[data.predio];
+    if (!coordenadas) {
+        alert(`Erro: Coordenadas do prédio "${data.predio}" não encontradas!`);
+        return;
     }
+
+    setTimeout(() => {
+        const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
+            .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
+    }, 300);
+}
+
+// Ajustar fechamento do modal
+document.getElementById("fecharModal").addEventListener("click", function () {
+    document.getElementById("modalMapa").classList.add("hidden");
+
+    // Mostrar o mapa inicial novamente
+    document.getElementById("mapaInicial").classList.remove("hidden-map");
+});
+
 
     window.pesquisar = pesquisar;
 </script>
