@@ -197,7 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
             };
             lista.appendChild(item);
         });
-    } else if (!prediosFixos[termoNormalizado]) {
+    } else if (!coordenadasLocais[termoNormalizado]) {
         lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
     }
 
