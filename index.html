@@ -105,7 +105,7 @@ document.getElementById("fecharModal").addEventListener("click", function () {
     const mapContainer = document.getElementById("mapContainer");
 
     // Definir título do modal
-    modalTitulo.innerHTML = ${data.predio} - Sala ${data.sala} (${data.curso});
+    modalTitulo.innerHTML = `${data.predio} - Sala ${data.sala} (${data.curso})`;
 
     // Limpar conteúdo do mapa para evitar sobreposição
     mapContainer.innerHTML = "<div id='map' class='w-full h-96'></div>";
