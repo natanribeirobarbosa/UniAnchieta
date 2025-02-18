@@ -105,18 +105,38 @@ input, button {
 }
 
 /* Ajustar o botão de fechar */
+/* Ajustar o botão de fechar (X) */
 #fecharModal {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: -12px; /* Ele sobe um pouco para não cobrir o título */
+    right: -12px; /* Ajusta melhor em telas maiores */
     background: red;
     color: white;
     border: none;
-    padding: 8px 12px;
+    padding: 10px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
+    z-index: 10; /* Garante que fique acima do conteúdo sem cobrir */
 }
+
+/* Ajustar em telas pequenas */
+@media (max-width: 600px) {
+    #fecharModal {
+        top: 10px;
+        right: 10px;
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+}
+
 
 /* Evita que o conteúdo do modal ultrapasse a tela */
 #mapContainer {
@@ -148,13 +168,15 @@ input, button {
     </div>
 
     <!-- Modal para o mapa de detalhes -->
-    <div id="modalMapa" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
-        <div class="bg-white w-[90vw] md:w-[70vw] lg:w-[50vw] h-[80vh] p-6 rounded-lg shadow-lg relative flex flex-col">
-            <button id="fecharModal" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg">X</button>
-            <h2 class="text-xl font-bold mb-4 text-center" id="modalTitulo"></h2>
-            <div id="mapContainer" class="w-full flex-1 rounded-lg"></div>
-        </div>
+<!-- Modal para o mapa -->
+<div id="modalMapa" class="hidden">
+    <div>
+        <button id="fecharModal">X</button>
+        <h2 id="modalTitulo"></h2>
+        <div id="mapContainer"></div>
     </div>
+</div>
+
 </body>
    <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
