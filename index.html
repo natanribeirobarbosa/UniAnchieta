@@ -49,7 +49,7 @@
 });
 
 
-     function exibirDetalhes(data) {
+   function exibirDetalhes(data) {
     const modal = document.getElementById("modalMapa");
     const modalTitulo = document.getElementById("modalTitulo");
     const mapContainer = document.getElementById("mapContainer");
@@ -77,21 +77,22 @@
     }
 
     setTimeout(() => {
-        const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
+        const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 17);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
+        // Marcador do destino (prédio selecionado)
         L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
             .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
 
-        navigator.geolocation.getCurrentPosition(
+        navigator.geolocation.watchPosition( // Monitorar a posição do usuário
             (position) => {
                 const { latitude, longitude } = position.coords;
 
                 // Adiciona um marcador na localização do usuário
-                L.marker([latitude, longitude]).addTo(map)
+                const userMarker = L.marker([latitude, longitude]).addTo(map)
                     .bindPopup("Você está aqui").openPopup();
 
                 // Traçar a rota corretamente para o prédio selecionado
@@ -99,13 +100,40 @@
                     [latitude, longitude],
                     [coordenadas.latitude, coordenadas.longitude]
                 ], { color: 'blue' }).addTo(map);
+
+                // Verificar se o usuário chegou ao destino
+                if (calcularDistancia(latitude, longitude, coordenadas.latitude, coordenadas.longitude) < 10) {
+                    alert("Parabéns! Você chegou ao destino! 🎉");
+                }
             },
             () => {
                 alert("Não foi possível obter sua localização.");
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
             }
         );
     }, 200);
 }
+
+// Função para calcular a distância entre dois pontos (em metros)
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // Raio da Terra em metros
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distância em metros
+}
+
 
 
 
