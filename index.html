@@ -8,32 +8,90 @@
     <!-- Adicionando Leaflet CSS e JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    
+
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
     <style>
-    /* Impedir rolagem da página */
-    html, body {
-        overflow: hidden;
-        height: 100%;
-    }
+        /* Impedir rolagem da página */
+        html, body {
+            overflow: hidden;
+            height: 100%;
+        }
 
-    /* Garantir que o modal cubra a tela toda no celular */
-    #modalMapa {
-        width: 100vw;
-        height: 100vh;
-    }
+        /* Garantir que o modal cubra a tela toda no celular */
+        #modalMapa {
+            width: 100vw;
+            height: 100vh;
+        }
 
-    /* Ajustar o modal no celular */
-    #modalMapa > div {
-        max-height: 90vh;
-        width: 95%;
-    }
+        /* Ajustar o modal no celular */
+        #modalMapa > div {
+            max-height: 90vh;
+            width: 95%;
+        }
 
-    /* Garantir que a lista não ultrapasse a tela */
-    #listaRegistros {
-        overflow-y: auto;
-    }
+        /* Garantir que a lista não ultrapasse a tela */
+        #listaRegistros {
+            overflow-y: auto;
+        }
+
+        /* Ajuste do botão de fechar no modal */
+        #fecharModal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: red;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        /* Ajuste do mapa inicial */
+        #mapaInicial {
+            width: 100%;
+            height: 50vh;
+            border-radius: 8px;
+            overflow: hidden;
+        }
     </style>
-    
+</head>
+
+<body class="flex flex-col items-center justify-center bg-gray-100 h-screen w-screen overflow-hidden">
+    <div class="w-full max-w-4xl flex flex-col items-center p-4 space-y-4">
+        <h1 class="text-2xl font-bold text-center">Pesquisa de Localização - UniAnchieta</h1>
+
+        <div class="w-full flex flex-col md:flex-row gap-4 items-center">
+            <input type="text" id="pesquisa" class="border flex-1 p-2 rounded-lg text-center" placeholder="Pesquise por palavras-chave...">
+            <button onclick="pesquisar()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                Pesquisar
+            </button>
+        </div>
+
+        <!-- Mapa Inicial -->
+        <div id="mapaInicial" class="w-full h-[50vh] md:h-[60vh] rounded-lg shadow-md"></div>
+
+        <!-- Lista de Resultados -->
+        <ul id="listaRegistros" class="w-full max-w-2xl bg-white p-4 shadow-md rounded-lg overflow-auto hidden" style="max-height: 30vh;"></ul>
+    </div>
+
+    <!-- Modal para o mapa de detalhes -->
+    <div id="modalMapa" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+        <div class="bg-white w-[90vw] md:w-[70vw] lg:w-[50vw] h-[80vh] p-6 rounded-lg shadow-lg relative flex flex-col">
+            <button id="fecharModal" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg">X</button>
+            <h2 class="text-xl font-bold mb-4 text-center" id="modalTitulo"></h2>
+            <div id="mapContainer" class="w-full flex-1 rounded-lg"></div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -63,23 +121,31 @@
             document.getElementById("modalMapa").classList.add("hidden");
         });
 
+        document.addEventListener("DOMContentLoaded", function () {
+            const mapaInicialDiv = document.getElementById("mapaInicial");
+
+            setTimeout(() => {
+                const map = L.map(mapaInicialDiv).setView([-23.214, -46.892], 15);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+            }, 500);
+        });
+
         function exibirDetalhes(data) {
             const modal = document.getElementById("modalMapa");
             const modalTitulo = document.getElementById("modalTitulo");
             const mapContainer = document.getElementById("mapContainer");
 
-            // Definir título do modal
             modalTitulo.innerHTML = `${data.predio} - Sala ${data.sala} (${data.curso})`;
 
-            // Limpar conteúdo do mapa para evitar sobreposição
-            mapContainer.innerHTML = `<div id="map" class="w-full h-96"></div>`;
+            mapContainer.innerHTML = `<div id="map" class="w-full h-full"></div>`;
 
-            // Exibir o modal
             modal.classList.remove("hidden");
 
             const coordenadas = coordenadasLocais[data.predio] || coordenadasLocais["Prédio 1"];
 
-            // Criar mapa dentro do modal
             setTimeout(() => {
                 const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -91,94 +157,30 @@
             }, 200);
         }
 
-        function removerAcentos(texto) {
-            return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-        }
-
         async function pesquisar() {
             let queryTermo = document.getElementById("pesquisa").value.trim();
             if (queryTermo === "") return alert("Digite um termo de pesquisa!");
 
-            queryTermo = removerAcentos(queryTermo);
-
             const lista = document.getElementById("listaRegistros");
             lista.innerHTML = "";
 
-            let resultados = [];
-
-            // Verificar se a pesquisa é um prédio
-            for (let predio in coordenadasLocais) {
-                if (removerAcentos(predio) === queryTermo) {
-                    resultados.push({
-                        predio,
-                        sala: "N/A",
-                        curso: "Localização"
-                    });
-                    break;
-                }
-            }
-
-            // Buscar no Firestore
             const snapshot = await getDocs(collection(db, "salas"));
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                if (data.keywords.some(keyword => removerAcentos(keyword).includes(queryTermo))) {
-                    resultados.push(data);
-                }
+                const item = document.createElement("li");
+                item.className = "border-b p-2 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-lg p-3";
+                item.innerHTML = `<strong>${data.predio} - Sala ${data.sala}</strong>`;
+                item.onclick = function () {
+                    exibirDetalhes(data);
+                };
+                lista.appendChild(item);
             });
-
-            if (resultados.length > 0) {
-                lista.innerHTML = "";
-                resultados.forEach(data => {
-                    const item = document.createElement("li");
-                    item.className = "border-b p-2 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-lg p-3";
-                    item.innerHTML = `
-                        <strong>${data.predio} - Sala ${data.sala !== "N/A" ? data.sala : ""}</strong><br>
-                        <span>${data.curso !== "N/A" ? data.curso : ""}</span><br>
-                        <small>${data.docente ? `${data.docente} - ${data.horario}` : ""}</small>
-                    `;
-                    item.onclick = function () {
-                        exibirDetalhes(data);
-                    };
-                    lista.appendChild(item);
-                });
-            } else {
-                lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
-            }
 
             lista.style.display = "block";
         }
 
         window.pesquisar = pesquisar;
     </script>
-</head>
-
-<body class="flex flex-col items-center justify-center bg-gray-100 h-screen w-screen overflow-hidden">
-    <div class="w-full max-w-4xl flex flex-col items-center p-4 space-y-4">
-        <h1 class="text-2xl font-bold text-center">Pesquisa de Localização - UniAnchieta</h1>
-
-        <div class="w-full flex flex-col md:flex-row gap-4 items-center">
-            <input type="text" id="pesquisa" class="border flex-1 p-2 rounded-lg text-center" placeholder="Pesquise por palavras-chave...">
-            <button onclick="pesquisar()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                Pesquisar
-            </button>
-        </div>
-
-        <!-- Mapa Inicial -->
-        <div id="mapaInicial" class="w-full h-[50vh] md:h-[60vh] rounded-lg shadow-md"></div>
-
-        <!-- Lista de Resultados -->
-        <ul id="listaRegistros" class="w-full max-w-2xl bg-white p-4 shadow-md rounded-lg overflow-auto hidden" style="max-height: 30vh;"></ul>
-    </div>
-
-    <!-- Modal para o mapa de detalhes -->
-    <div id="modalMapa" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
-        <div class="bg-white w-[90vw] md:w-[70vw] lg:w-[50vw] h-[80vh] p-6 rounded-lg shadow-lg relative flex flex-col">
-            <button id="fecharModal" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg">X</button>
-            <h2 class="text-xl font-bold mb-4 text-center" id="modalTitulo"></h2>
-            <div id="mapContainer" class="w-full flex-1 rounded-lg"></div>
-        </div>
-    </div>
 </body>
 </html>
