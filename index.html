@@ -158,27 +158,71 @@
         }
 
         async function pesquisar() {
-            let queryTermo = document.getElementById("pesquisa").value.trim();
-            if (queryTermo === "") return alert("Digite um termo de pesquisa!");
+    let queryTermo = document.getElementById("pesquisa").value.trim();
+    if (queryTermo === "") return alert("Digite um termo de pesquisa!");
 
-            const lista = document.getElementById("listaRegistros");
-            lista.innerHTML = "";
+    queryTermo = removerAcentos(queryTermo);
 
-            const snapshot = await getDocs(collection(db, "salas"));
+    const lista = document.getElementById("listaRegistros");
+    lista.innerHTML = "";
+    let resultados = [];
 
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const item = document.createElement("li");
-                item.className = "border-b p-2 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-lg p-3";
-                item.innerHTML = `<strong>${data.predio} - Sala ${data.sala}</strong>`;
-                item.onclick = function () {
-                    exibirDetalhes(data);
-                };
-                lista.appendChild(item);
+    // Adicionar prédio como primeira opção caso o usuário pesquise por um prédio específico
+    for (let predio in coordenadasLocais) {
+        if (removerAcentos(predio) === queryTermo) {
+            resultados.push({
+                predio,
+                sala: "N/A",
+                curso: "Ir para o prédio",
+                disciplina: "",
+                docente: "",
+                horario: ""
             });
-
-            lista.style.display = "block";
+            break;
         }
+    }
+
+    // Buscar no Firestore todas as salas relacionadas
+    const snapshot = await getDocs(collection(db, "salas"));
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.keywords.some(keyword => removerAcentos(keyword).includes(queryTermo))) {
+            resultados.push(data);
+        }
+    });
+
+    // Exibir os resultados
+    if (resultados.length > 0) {
+        lista.innerHTML = "";
+        resultados.forEach(data => {
+            const item = document.createElement("li");
+            item.className = "border-b p-2 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-lg p-3";
+
+            // Se for a opção de ir para o prédio, mostrar um texto diferente
+            if (data.sala === "N/A") {
+                item.innerHTML = `<strong>${data.predio}</strong> - <span class="text-blue-500">Ir para o prédio</span>`;
+            } else {
+                item.innerHTML = `
+                    <strong>${data.predio} - Sala ${data.sala}</strong><br>
+                    <span>${data.curso}</span><br>
+                    <small>${data.docente} - ${data.horario}</small>
+                `;
+            }
+
+            item.onclick = function () {
+                exibirDetalhes(data);
+            };
+
+            lista.appendChild(item);
+        });
+    } else {
+        lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
+    }
+
+    lista.style.display = "block";
+}
+
 
         window.pesquisar = pesquisar;
     </script>
