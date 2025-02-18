@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-     // Função para remover acentos e padronizar texto
+// Função para remover acentos e padronizar texto
 function removerAcentos(str) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
@@ -154,7 +154,7 @@ function corrigirPesquisa(termo) {
         "predio 2": "prédio 2",
         "predio3": "prédio 3",
         "predio 3": "prédio 3",
-        "predi 1": "prédio 1", // Corrige erros comuns
+        "predi 1": "prédio 1",
         "predi 2": "prédio 2",
         "predi 3": "prédio 3"
     };
@@ -187,7 +187,7 @@ async function pesquisar() {
         item.className = "border-b p-2 cursor-pointer font-bold bg-gray-200";
         item.innerHTML = `<strong>${predio.nome}</strong> - Clique para ver no mapa`;
         item.onclick = function() {
-            exibirMapa(predio.latitude, predio.longitude, predio.nome);
+            exibirMapaComRota(predio.latitude, predio.longitude, predio.nome);
         };
         lista.appendChild(item);
     }
@@ -227,8 +227,8 @@ async function pesquisar() {
     lista.style.display = "block";
 }
 
-// Função para exibir o prédio no mapa
-function exibirMapa(latitude, longitude, nome) {
+// Função para exibir o prédio no mapa e traçar a rota do usuário até ele
+function exibirMapaComRota(destLatitude, destLongitude, nome) {
     const modal = document.getElementById("modalMapa");
     const modalTitulo = document.getElementById("modalTitulo");
     const mapContainer = document.getElementById("mapContainer");
@@ -243,14 +243,42 @@ function exibirMapa(latitude, longitude, nome) {
     modal.classList.remove("hidden");
 
     setTimeout(() => {
-        const map = L.map('map').setView([latitude, longitude], 17);
+        const map = L.map('map').setView([destLatitude, destLongitude], 17);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        L.marker([latitude, longitude]).addTo(map)
+        // Marcador do prédio selecionado
+        L.marker([destLatitude, destLongitude]).addTo(map)
             .bindPopup(nome).openPopup();
+
+        // Tentar obter a localização do usuário
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+
+                // Adicionar um marcador para a localização do usuário
+                L.marker([latitude, longitude], { icon: L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/64/684/684908.png', iconSize: [30, 30] }) })
+                    .addTo(map)
+                    .bindPopup("Você está aqui").openPopup();
+
+                // Traçar rota do usuário até o prédio
+                L.polyline([
+                    [latitude, longitude],
+                    [destLatitude, destLongitude]
+                ], { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+            },
+            (error) => {
+                console.error("Erro ao obter localização:", error);
+                alert("Não foi possível obter sua localização. Verifique as permissões do GPS.");
+            },
+            {
+                enableHighAccuracy: true, // Maior precisão ativada
+                timeout: 5000, // Tempo limite reduzido para 5 segundos
+                maximumAge: 1000 // Usa posição recente, se disponível (1s)
+            }
+        );
     }, 200);
 }
 
