@@ -1,138 +1,46 @@
+
 <!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pesquisa de Localização - UniAnchieta</title>
-
+    
     <!-- Adicionando Leaflet CSS e JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
     <style>
-        /* Impedir rolagem */
-        html, body {
-            overflow: hidden;
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-        }
+    /* Impedir rolagem da página */
+    html, body {
+        overflow: hidden;
+        height: 100%;
+    }
 
-        /* Ajustar o container principal */
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100vw;
-            height: 100vh;
-            padding: 16px;
-            box-sizing: border-box;
-        }
+    /* Garantir que o modal cubra a tela toda no celular */
+    #modalMapa {
+        width: 100vw;
+        height: 100vh;
+    }
 
-        /* Ajustar a lista de resultados */
-        #listaRegistros {
-            width: 100%;
-            max-width: 500px;
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            overflow-y: auto;
-            max-height: 30vh;
-            display: none;
-        }
+    /* Ajustar o modal no celular */
+    #modalMapa > div {
+        max-height: 90vh;
+        width: 95%;
+    }
 
-        /* Ajuste do modal */
-        #modalMapa {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+    /* Garantir que a lista não ultrapasse a tela */
+    #listaRegistros {
+        overflow-y: auto;
+    }
+</style>
 
-        /* Conteúdo do modal */
-        #modalMapa > div {
-            width: 90%;
-            max-width: 500px;
-            background: white;
-            border-radius: 10px;
-            padding: 16px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            display: flex;
-            flex-direction: column;
-            max-height: 85vh;
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* Botão de fechar */
-        #fecharModal {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: red;
-            color: white;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Ajustar o mapa */
-        #mapContainer {
-            width: 100%;
-            height: 50vh;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-    </style>
-</head>
-
-<body class="container bg-gray-100">
-    <h1>Pesquisa de Localização - UniAnchieta</h1>
-
-    <div class="input-container">
-        <input type="text" id="pesquisa" class="border p-2 text-center" placeholder="Pesquise por palavras-chave...">
-        <button onclick="pesquisar()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Pesquisar
-        </button>
-    </div>
-
-    <!-- Mapa Inicial -->
-    <div id="mapaInicial" class="w-full h-[50vh] md:h-[60vh] rounded-lg shadow-md"></div>
-
-    <!-- Lista de Resultados -->
-    <ul id="listaRegistros"></ul>
-
-    <!-- Modal para o mapa -->
-    <div id="modalMapa">
-        <div>
-            <button id="fecharModal">X</button>
-            <h2 id="modalTitulo"></h2>
-            <div id="mapContainer"></div>
-        </div>
-    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Configurar Firebase
         const firebaseConfig = {
-            apiKey: "API_KEY",
+            apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
             authDomain: "unianchieta-a83bd.firebaseapp.com",
             databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
             projectId: "unianchieta-a83bd",
@@ -145,75 +53,257 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Coordenadas dos prédios
+        // Coordenadas atualizadas para os prédios
         const coordenadasLocais = {
-            "Prédio 1": { latitude: -23.214433, longitude: -46.891462 },
-            "Prédio 2": { latitude: -23.213309, longitude: -46.892557 },
-            "Prédio 3": { latitude: -23.213816, longitude: -46.892696 }
+            "Prédio 1": { latitude: -23.214433158266555, longitude: -46.89146281675962 },
+            "Prédio 2": { latitude: -23.21330932218799, longitude: -46.89255711603703 },
+            "Prédio 3": { latitude: -23.21381689404497, longitude: -46.892696577592055 }
         };
+        document.getElementById("fecharModal").addEventListener("click", function () {
+    document.getElementById("modalMapa").classList.add("hidden");
+});
 
-        // Função para remover acentos
-        function removerAcentos(texto) {
-            return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-        }
-
-        // Criar mapa inicial
         document.addEventListener("DOMContentLoaded", function () {
-            const mapaInicialDiv = document.getElementById("mapaInicial");
+    const mapaInicialDiv = document.getElementById("mapaInicial");
 
+    // Criar o mapa com posição inicial genérica
+    const map = L.map(mapaInicialDiv).setView([-23.214, -46.892], 15);
+    
+    // Adicionar camada do OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Obter localização do usuário
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
+            
+            // Atualizar o centro do mapa para a localização do usuário
+            map.setView([latitude, longitude], 17);
+            
+            // Adicionar um marcador para a posição atual
+            L.marker([latitude, longitude]).addTo(map)
+                .bindPopup("Você está aqui").openPopup();
+        },
+        () => {
+            alert("Não foi possível obter sua localização.");
+        }
+    );
+});
+
+// Ajustar fechamento do modal
+document.getElementById("fecharModal").addEventListener("click", function () {
+    document.getElementById("modalMapa").classList.add("hidden");
+});
+
+
+
+  function exibirDetalhes(data) {
+    const modal = document.getElementById("modalMapa");
+    const modalTitulo = document.getElementById("modalTitulo");
+    const mapContainer = document.getElementById("mapContainer");
+
+    // Definir título do modal
+    modalTitulo.innerHTML = ${data.predio} - Sala ${data.sala} (${data.curso});
+
+    // Limpar conteúdo do mapa para evitar sobreposição
+    mapContainer.innerHTML = "<div id='map' class='w-full h-96'></div>";
+
+    // Exibir o modal
+    modal.classList.remove("hidden");
+
+    // Remover acentos do nome do prédio antes de buscar coordenadas
+    const predioSemAcento = removerAcentos(data.predio);
+
+    // Buscar coordenadas do prédio correto
+    let coordenadas = null;
+    for (let key in coordenadasLocais) {
+        if (removerAcentos(key) === predioSemAcento) {
+            coordenadas = coordenadasLocais[key];
+            break;
+        }
+    }
+
+    // Se não encontrar, exibir erro
+    if (!coordenadas) {
+        alert(Erro: Coordenadas do prédio "${data.predio}" não encontradas!);
+        return;
+    }
+
+    // Obter localização do usuário
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
+
+            // Calcular a diferença de distância entre usuário e prédio
+            const diferencaLat = Math.abs(latitude - coordenadas.latitude);
+            const diferencaLng = Math.abs(longitude - coordenadas.longitude);
+
+            // Definir um raio de proximidade (aprox. 30 metros)
+            const limiteProximidade = 0.00027; 
+
+            if (diferencaLat < limiteProximidade && diferencaLng < limiteProximidade) {
+                alert(Você já está no ${data.predio}!\n\nSala: ${data.sala}\nCurso: ${data.curso}\nDisciplina: ${data.disciplina}\nDocente: ${data.docente}\nHorário: ${data.horario});
+                return;
+            }
+
+            // Se a pessoa NÃO estiver no prédio, traçar a rota
             setTimeout(() => {
-                const map = L.map(mapaInicialDiv).setView([-23.214, -46.892], 15);
-                
+                const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
+
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
-            }, 500);
-        });
 
-        // Fechar modal
-        document.getElementById("fecharModal").addEventListener("click", function () {
-            document.getElementById("modalMapa").style.display = "none";
-        });
+                L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
+                    .bindPopup(${data.predio} - Sala ${data.sala}).openPopup();
 
-        // Função de pesquisa
-        async function pesquisar() {
-            let queryTermo = document.getElementById("pesquisa").value.trim();
-            if (queryTermo === "") return alert("Digite um termo de pesquisa!");
+                // Marcar a posição do usuário
+                L.marker([latitude, longitude]).addTo(map)
+                    .bindPopup("Você está aqui").openPopup();
 
-            queryTermo = removerAcentos(queryTermo);
-
-            const lista = document.getElementById("listaRegistros");
-            lista.innerHTML = "";
-            lista.style.display = "block";
-
-            let resultados = [];
-
-            const snapshot = await getDocs(collection(db, "salas"));
-
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.keywords.some(keyword => removerAcentos(keyword).includes(queryTermo))) {
-                    resultados.push(data);
-                }
-            });
-
-            if (resultados.length > 0) {
-                lista.innerHTML = "";
-                resultados.forEach(data => {
-                    const item = document.createElement("li");
-                    item.className = "border-b p-2 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-lg p-3";
-                    item.innerHTML = `<strong>${data.predio} - Sala ${data.sala}</strong><br>${data.curso}<br><small>${data.docente} - ${data.horario}</small>`;
-                    item.onclick = function () {
-                        exibirDetalhes(data);
-                    };
-                    lista.appendChild(item);
-                });
-            } else {
-                lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
-            }
+                // Traçar rota do usuário até o prédio
+                L.polyline([
+                    [latitude, longitude],
+                    [coordenadas.latitude, coordenadas.longitude]
+                ], { color: 'blue' }).addTo(map);
+            }, 200);
+        },
+        () => {
+            alert("Não foi possível obter sua localização.");
         }
+    );
+}
+
+
+
+
+        document.addEventListener("DOMContentLoaded", function () {
+    const mapaInicialDiv = document.getElementById("mapaInicial");
+
+    // Criar o mapa com uma posição inicial padrão
+    const map = L.map(mapaInicialDiv).setView([-23.214, -46.892], 15);
+    
+    // Adicionar camada de mapa do OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Obter localização do usuário
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
+            
+            // Centralizar o mapa na localização do usuário
+            map.setView([latitude, longitude], 17);
+            
+            // Adicionar um marcador na posição atual do usuário
+            L.marker([latitude, longitude]).addTo(map)
+                .bindPopup("Você está aqui").openPopup();
+        },
+        () => {
+            alert("Não foi possível obter sua localização.");
+        }
+    );
+});
+
+
+        // Função para remover acentos
+function removerAcentos(texto) {
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+async function pesquisar() {
+    let queryTermo = document.getElementById("pesquisa").value.trim();
+    if (queryTermo === "") return alert("Digite um termo de pesquisa!");
+
+    queryTermo = removerAcentos(queryTermo); // Remove acentos e transforma em minúsculas
+
+    const lista = document.getElementById("listaRegistros");
+    lista.innerHTML = "";
+
+    let resultados = [];
+
+    // Verificar se o termo pesquisado corresponde a um prédio
+    for (let predio in coordenadasLocais) {
+        if (removerAcentos(predio) === queryTermo) {
+            resultados.push({
+                predio: predio,
+                sala: "N/A",
+                curso: "Localização",
+                disciplina: "N/A",
+                docente: "N/A",
+                horario: "N/A"
+            });
+            break; // Garante que o prédio apareça sozinho no topo
+        }
+    }
+
+    // Buscar os demais resultados no Firestore
+    const snapshot = await getDocs(collection(db, "salas"));
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.keywords.some(keyword => removerAcentos(keyword).includes(queryTermo))) {
+            resultados.push(data);
+        }
+    });
+
+    // Exibir os resultados na interface
+    if (resultados.length > 0) {
+        resultados.forEach(data => {
+            const item = document.createElement("li");
+            item.className = "border-b p-2 cursor-pointer";
+            item.innerHTML = 
+                <strong>${data.predio} - ${data.sala !== "N/A" ? Sala ${data.sala} : ""}</strong><br>
+                <span>${data.curso !== "N/A" ? data.curso : ""}</span><br>
+                <small>${data.docente !== "N/A" ? data.docente + " - " + data.horario : ""}</small>
+            ;
+            item.onclick = function () {
+                exibirDetalhes(data);
+            };
+            lista.appendChild(item);
+        });
+    } else {
+        lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
+    }
+    lista.style.display = "block";
+}
 
         window.pesquisar = pesquisar;
     </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="flex flex-col items-center justify-center bg-gray-100 h-screen w-screen overflow-hidden">
+    <div class="w-full max-w-4xl flex flex-col items-center p-4 space-y-4">
+        <h1 class="text-2xl font-bold text-center">Pesquisa de Localização - UniAnchieta</h1>
+
+        <div class="w-full flex flex-col md:flex-row gap-4 items-center">
+            <input type="text" id="pesquisa" class="border flex-1 p-2 rounded-lg text-center" placeholder="Pesquise por palavras-chave...">
+            <button onclick="pesquisar()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                Pesquisar
+            </button>
+        </div>
+
+        <!-- Mapa Inicial -->
+        <div id="mapaInicial" class="w-full h-[50vh] md:h-[60vh] rounded-lg shadow-md"></div>
+
+        <!-- Lista de Resultados -->
+        <ul id="listaRegistros" class="w-full max-w-2xl bg-white p-4 shadow-md rounded-lg overflow-auto hidden" style="max-height: 30vh;"></ul>
+    </div>
+
+    <!-- Modal para o mapa de detalhes -->
+    <div id="modalMapa" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+        <div class="bg-white w-[90vw] md:w-[70vw] lg:w-[50vw] h-[80vh] p-6 rounded-lg shadow-lg relative flex flex-col">
+            <button id="fecharModal" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg">X</button>
+            <h2 class="text-xl font-bold mb-4 text-center" id="modalTitulo"></h2>
+            <div id="mapContainer" class="w-full flex-1 rounded-lg"></div>
+        </div>
+    </div>
 </body>
+
 </html>
+
+
