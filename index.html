@@ -98,36 +98,46 @@
 
 
 
-
 document.addEventListener("DOMContentLoaded", function () {
     const mapaInicialDiv = document.getElementById("mapaInicial");
 
-    // Criar o mapa com uma posição inicial padrão
+    // Criar o mapa com uma posição inicial genérica (UniAnchieta)
     const map = L.map(mapaInicialDiv).setView([-23.214, -46.892], 15);
     
-    // Adicionar camada de mapa do OpenStreetMap
+    // Adicionar camada do OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Obter localização do usuário
+    // Adicionar marcador temporário até que a localização real seja carregada
+    let userMarker = L.marker([-23.214, -46.892], { draggable: false })
+        .addTo(map)
+        .bindPopup("Localização padrão... tentando encontrar sua posição real.")
+        .openPopup();
+
+    // Tentar obter a localização real do usuário
     navigator.geolocation.getCurrentPosition(
         (position) => {
             const { latitude, longitude } = position.coords;
-            
-            // Centralizar o mapa na localização do usuário
+
+            // Atualizar o mapa para a posição real do usuário
             map.setView([latitude, longitude], 17);
-            
-            // Adicionar um marcador na posição atual do usuário
-            L.marker([latitude, longitude]).addTo(map)
-                .bindPopup("Você está aqui").openPopup();
+
+            // Atualizar o marcador com a posição real
+            userMarker.setLatLng([latitude, longitude])
+                .bindPopup("Você está aqui!").openPopup();
         },
-        () => {
-            alert("Não foi possível obter sua localização.");
+        (error) => {
+            console.error("Erro ao obter localização:", error);
+            alert("Não foi possível obter sua localização precisa. Verifique as permissões e o GPS.");
+        },
+        {
+            enableHighAccuracy: true, // Maior precisão ativada
+            timeout: 5000, // Tempo limite reduzido para 5 segundos
+            maximumAge: 1000 // Usa posição recente, se disponível (1s)
         }
     );
 });
-
 
 
         function removerAcentos(str) {
