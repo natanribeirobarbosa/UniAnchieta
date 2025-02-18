@@ -12,328 +12,205 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
     <style>
-       /* Estilo atualizado para impedir transbordamento e garantir que o modal fique sempre por cima */
-/* Impedir rolagem e garantir que tudo se encaixe */
-html, body {
-    overflow: hidden;
-    height: 100%;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-}
+        /* Impedir rolagem e garantir que tudo se encaixe */
+        html, body {
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
 
-/* Garantir que todo o conteúdo principal se ajuste à tela */
-.container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100vw;
-    height: 100vh;
-    padding: 16px;
-    box-sizing: border-box;
-}
+        /* Garantir que todo o conteúdo principal se ajuste à tela */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100vw;
+            height: 100vh;
+            padding: 16px;
+            box-sizing: border-box;
+        }
 
-/* Ajuste para o título */
-h1 {
-    font-size: 1.5rem;
-    text-align: center;
-    max-width: 90%;
-}
+        /* Ajuste para o título */
+        h1 {
+            font-size: 1.5rem;
+            text-align: center;
+            max-width: 90%;
+        }
 
-/* Input e botão responsivos */
-.input-container {
-    width: 100%;
-    max-width: 500px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
+        /* Input e botão responsivos */
+        .input-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
-input, button {
-    width: 100%;
-    padding: 10px;
-    font-size: 1rem;
-    border-radius: 8px;
-}
+        input, button {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 8px;
+        }
 
-/* Mapa inicial ajustável */
-#mapaInicial {
-    width: 100%;
-    height: 40vh;
-    min-height: 250px;
-    max-height: 50vh;
-    border-radius: 8px;
-    overflow: hidden;
-}
+        /* Mapa inicial ajustável */
+        #mapaInicial {
+            width: 100%;
+            height: 40vh;
+            min-height: 250px;
+            max-height: 50vh;
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-/* Lista de resultados */
-#listaRegistros {
-    width: 100%;
-    max-width: 500px;
-    background: white;
-    border-radius: 8px;
-    padding: 10px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
-    max-height: 25vh;
-}
+        /* Lista de resultados */
+        #listaRegistros {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            max-height: 25vh;
+            display: none; /* Esconder até ter resultados */
+        }
 
-/* Ajuste do modal para evitar transbordamento */
-#modalMapa {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
+        /* Ajuste do modal para evitar transbordamento */
+        #modalMapa {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none; /* Inicialmente escondido */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
 
-/* Ajuste do conteúdo do modal */
-#modalMapa > div {
-    width: 90%;
-    max-width: 500px;
-    background: white;
-    border-radius: 10px;
-    padding: 16px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    display: flex;
-    flex-direction: column;
-    max-height: 85vh;
-    overflow: hidden;
-}
+        /* Ajuste do conteúdo do modal */
+        #modalMapa > div {
+            width: 90%;
+            max-width: 500px;
+            background: white;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+            overflow: hidden;
+            position: relative;
+        }
 
-/* Ajustar o botão de fechar */
-/* Ajustar o botão de fechar (X) */
-#fecharModal {
-    position: absolute;
-    top: -12px; /* Ele sobe um pouco para não cobrir o título */
-    right: -12px; /* Ajusta melhor em telas maiores */
-    background: red;
-    color: white;
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
-    z-index: 10; /* Garante que fique acima do conteúdo sem cobrir */
-}
+        /* Ajustar o botão de fechar */
+        #fecharModal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: red;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-/* Ajustar em telas pequenas */
-@media (max-width: 600px) {
-    #fecharModal {
-        top: 10px;
-        right: 10px;
-        width: 32px;
-        height: 32px;
-        font-size: 14px;
-    }
-}
-
-
-/* Evita que o conteúdo do modal ultrapasse a tela */
-#mapContainer {
-    width: 100%;
-    height: 50vh;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
+        /* Evita que o conteúdo do modal ultrapasse a tela */
+        #mapContainer {
+            width: 100%;
+            height: 50vh;
+            border-radius: 8px;
+            overflow: hidden;
+        }
     </style>
 </head>
 
-<body class="flex flex-col items-center justify-center bg-gray-100 h-screen w-screen overflow-hidden">
-    <div class="w-full max-w-4xl flex flex-col items-center p-4 space-y-4">
-        <h1 class="text-2xl font-bold text-center">Pesquisa de Localização - UniAnchieta</h1>
+<body class="container bg-gray-100">
+    <h1>Pesquisa de Localização - UniAnchieta</h1>
 
-        <div class="w-full flex flex-col md:flex-row gap-4 items-center">
-            <input type="text" id="pesquisa" class="border flex-1 p-2 rounded-lg text-center" placeholder="Pesquise por palavras-chave...">
-            <button onclick="pesquisar()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                Pesquisar
-            </button>
+    <div class="input-container">
+        <input type="text" id="pesquisa" class="border p-2 text-center" placeholder="Pesquise por palavras-chave...">
+        <button onclick="pesquisar()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Pesquisar
+        </button>
+    </div>
+
+    <!-- Mapa Inicial -->
+    <div id="mapaInicial"></div>
+
+    <!-- Lista de Resultados -->
+    <ul id="listaRegistros"></ul>
+
+    <!-- Modal para o mapa -->
+    <div id="modalMapa">
+        <div>
+            <button id="fecharModal">X</button>
+            <h2 id="modalTitulo"></h2>
+            <div id="mapContainer"></div>
         </div>
-
-        <!-- Mapa Inicial -->
-        <div id="mapaInicial" class="w-full h-[50vh] md:h-[60vh] rounded-lg shadow-md"></div>
-
-        <!-- Lista de Resultados -->
-        <ul id="listaRegistros" class="w-full max-w-2xl bg-white p-4 shadow-md rounded-lg overflow-auto hidden"></ul>
     </div>
 
-    <!-- Modal para o mapa de detalhes -->
-<!-- Modal para o mapa -->
-<div id="modalMapa" class="hidden">
-    <div>
-        <button id="fecharModal">X</button>
-        <h2 id="modalTitulo"></h2>
-        <div id="mapContainer"></div>
-    </div>
-</div>
+    <script>
+        // Garante que o modal inicie fechado
+        document.getElementById("modalMapa").style.display = "none";
 
-</body>
-   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Criar mapa inicial ao carregar a página
+        document.addEventListener("DOMContentLoaded", function () {
+            const mapaInicialDiv = document.getElementById("mapaInicial");
 
-    const firebaseConfig = {
-        apiKey: "API_KEY",
-        authDomain: "unianchieta-a83bd.firebaseapp.com",
-        databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
-        projectId: "unianchieta-a83bd",
-        storageBucket: "unianchieta-a83bd.firebasestorage.app",
-        messagingSenderId: "566413683292",
-        appId: "1:566413683292:web:0b274aaf669269c7041499",
-        measurementId: "G-G8DGTH92FJ"
-    };
+            setTimeout(() => {
+                const map = L.map(mapaInicialDiv).setView([-23.214, -46.892], 15);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        map.setView([latitude, longitude], 17);
 
-    const coordenadasLocais = {
-        "Prédio 1": { latitude: -23.214433, longitude: -46.891462 },
-        "Prédio 2": { latitude: -23.213309, longitude: -46.892557 },
-        "Prédio 3": { latitude: -23.213816, longitude: -46.892696 }
-    };
-
-    // Criar mapa inicial ao carregar a página
-    document.addEventListener("DOMContentLoaded", function () {
-        const mapaInicialDiv = document.getElementById("mapaInicial");
-
-        setTimeout(() => {
-            const map = L.map(mapaInicialDiv).setView([-23.214, -46.892], 15);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    map.setView([latitude, longitude], 17);
-
-                    L.marker([latitude, longitude]).addTo(map)
-                        .bindPopup("Você está aqui").openPopup();
-                },
-                () => {
-                    alert("Não foi possível obter sua localização.");
-                }
-            );
-        }, 500);
-    });
-
-    // Fechar modal
-    document.getElementById("fecharModal").addEventListener("click", function () {
-        document.getElementById("modalMapa").classList.add("hidden");
-    });
-
-    // Função para remover acentos
-    function removerAcentos(texto) {
-        return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    }
-
-    async function pesquisar() {
-        let queryTermo = document.getElementById("pesquisa").value.trim();
-        if (queryTermo === "") return alert("Digite um termo de pesquisa!");
-
-        queryTermo = removerAcentos(queryTermo);
-
-        const lista = document.getElementById("listaRegistros");
-        lista.innerHTML = "";
-        lista.style.display = "block";
-
-        let resultados = [];
-
-        // Verificar se a pesquisa é um prédio
-        for (let predio in coordenadasLocais) {
-            if (removerAcentos(predio) === queryTermo) {
-                resultados.push({
-                    predio,
-                    sala: "N/A",
-                    curso: "Localização",
-                    disciplina: "N/A",
-                    docente: "N/A",
-                    horario: "N/A"
-                });
-                break;
-            }
-        }
-
-        // Buscar salas no Firestore
-        const snapshot = await getDocs(collection(db, "salas"));
-
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.keywords.some(keyword => removerAcentos(keyword).includes(queryTermo))) {
-                resultados.push(data);
-            }
+                        L.marker([latitude, longitude]).addTo(map)
+                            .bindPopup("Você está aqui").openPopup();
+                    },
+                    () => {
+                        alert("Não foi possível obter sua localização.");
+                    }
+                );
+            }, 500);
         });
 
-        if (resultados.length > 0) {
-            lista.innerHTML = "";
-            resultados.forEach(data => {
-                const item = document.createElement("li");
-                item.className = "border-b p-2 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-lg p-3";
-                item.innerHTML = `
-                    <strong>${data.predio} - ${data.sala !== "N/A" ? `Sala ${data.sala}` : ""}</strong><br>
-                    <span>${data.curso !== "N/A" ? data.curso : ""}</span><br>
-                    <small>${data.docente !== "N/A" ? data.docente + " - " + data.horario : ""}</small>
-                `;
-                item.onclick = function () {
-                    exibirDetalhes(data);
-                };
-                lista.appendChild(item);
-            });
-        } else {
-            lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
+        // Fechar modal
+        document.getElementById("fecharModal").addEventListener("click", function () {
+            document.getElementById("modalMapa").style.display = "none";
+            document.getElementById("mapaInicial").classList.remove("hidden");
+        });
+
+        // Função para abrir modal
+        function exibirDetalhes(data) {
+            document.getElementById("modalMapa").style.display = "flex";
+            document.getElementById("modalTitulo").innerHTML = `${data.predio} - Sala ${data.sala} (${data.curso})`;
+
+            // Criar mapa dentro do modal
+            setTimeout(() => {
+                const map = L.map('mapContainer').setView([data.latitude, data.longitude], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                L.marker([data.latitude, data.longitude]).addTo(map)
+                    .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
+            }, 300);
         }
-    }
-// Abrir Modal e esconder mapa inicial
-function exibirDetalhes(data) {
-    const modal = document.getElementById("modalMapa");
-    const modalTitulo = document.getElementById("modalTitulo");
-    const mapContainer = document.getElementById("mapContainer");
-    const mapaInicialDiv = document.getElementById("mapaInicial");
-
-    // Esconder o mapa inicial para evitar sobreposição
-    mapaInicialDiv.classList.add("hidden");
-
-    // Definir título do modal
-    modalTitulo.innerHTML = `${data.predio} - Sala ${data.sala} (${data.curso})`;
-
-    // Limpar e recriar o mapa dentro do modal
-    mapContainer.innerHTML = "<div id='map' class='w-full h-full'></div>";
-
-    // Exibir o modal
-    modal.classList.remove("hidden");
-
-    setTimeout(() => {
-        const map = L.map('map').setView([data.latitude, data.longitude], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        L.marker([data.latitude, data.longitude]).addTo(map)
-            .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
-    }, 300);
-}
-
-// Fechar Modal e restaurar o mapa inicial
-document.getElementById("fecharModal").addEventListener("click", function () {
-    document.getElementById("modalMapa").classList.add("hidden");
-    document.getElementById("mapaInicial").classList.remove("hidden");
-});
-
-
-
-    window.pesquisar = pesquisar;
-</script>
-
-
+    </script>
+</body>
 </html>
