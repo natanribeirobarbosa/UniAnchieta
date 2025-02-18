@@ -211,6 +211,63 @@
                     .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
             }, 300);
         }
+        window.pesquisar = async function () {
+    let queryTermo = document.getElementById("pesquisa").value.trim();
+    if (queryTermo === "") return alert("Digite um termo de pesquisa!");
+
+    queryTermo = removerAcentos(queryTermo);
+
+    const lista = document.getElementById("listaRegistros");
+    lista.innerHTML = "";
+    lista.style.display = "block";
+
+    let resultados = [];
+
+    // Verificar se a pesquisa é um prédio
+    for (let predio in coordenadasLocais) {
+        if (removerAcentos(predio) === queryTermo) {
+            resultados.push({
+                predio,
+                sala: "N/A",
+                curso: "Localização",
+                disciplina: "N/A",
+                docente: "N/A",
+                horario: "N/A"
+            });
+            break;
+        }
+    }
+
+    // Buscar salas no Firestore
+    const snapshot = await getDocs(collection(db, "salas"));
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.keywords.some(keyword => removerAcentos(keyword).includes(queryTermo))) {
+            resultados.push(data);
+        }
+    });
+
+    if (resultados.length > 0) {
+        lista.innerHTML = "";
+        resultados.forEach(data => {
+            const item = document.createElement("li");
+            item.className = "border-b p-2 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-lg p-3";
+            item.innerHTML = `
+                <strong>${data.predio} - ${data.sala !== "N/A" ? `Sala ${data.sala}` : ""}</strong><br>
+                <span>${data.curso !== "N/A" ? data.curso : ""}</span><br>
+                <small>${data.docente !== "N/A" ? data.docente + " - " + data.horario : ""}</small>
+            `;
+            item.onclick = function () {
+                exibirDetalhes(data);
+            };
+            lista.appendChild(item);
+        });
+    } else {
+        lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
+    }
+};
+
     </script>
 </body>
 </html>
