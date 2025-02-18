@@ -62,6 +62,41 @@
     document.getElementById("modalMapa").classList.add("hidden");
 });
 
+        document.addEventListener("DOMContentLoaded", function () {
+    const mapaInicialDiv = document.getElementById("mapaInicial");
+
+    // Criar o mapa com posição inicial genérica
+    const map = L.map(mapaInicialDiv).setView([-23.214, -46.892], 15);
+    
+    // Adicionar camada do OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Obter localização do usuário
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
+            
+            // Atualizar o centro do mapa para a localização do usuário
+            map.setView([latitude, longitude], 17);
+            
+            // Adicionar um marcador para a posição atual
+            L.marker([latitude, longitude]).addTo(map)
+                .bindPopup("Você está aqui").openPopup();
+        },
+        () => {
+            alert("Não foi possível obter sua localização.");
+        }
+    );
+});
+
+// Ajustar fechamento do modal
+document.getElementById("fecharModal").addEventListener("click", function () {
+    document.getElementById("modalMapa").classList.add("hidden");
+});
+
+
 
   function exibirDetalhes(data) {
     const modal = document.getElementById("modalMapa");
