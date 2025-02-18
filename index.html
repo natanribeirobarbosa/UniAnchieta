@@ -211,6 +211,13 @@
                     .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
             }, 300);
         }
+
+// Função global para remover acentos e normalizar texto
+window.removerAcentos = function (texto) {
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
+
+        
         window.pesquisar = async function () {
     let queryTermo = document.getElementById("pesquisa").value.trim();
     if (queryTermo === "") return alert("Digite um termo de pesquisa!");
