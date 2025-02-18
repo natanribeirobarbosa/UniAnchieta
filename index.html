@@ -33,47 +33,56 @@
             "Prédio 2": { latitude: -23.21330932218799, longitude: -46.89255711603703 },
             "Prédio 3": { latitude: -23.21381689404497, longitude: -46.892696577592055 }
         };
+        document.getElementById("fecharModal").addEventListener("click", function () {
+    document.getElementById("modalMapa").classList.add("hidden");
+});
 
-        function exibirDetalhes(data) {
-            const detalhesElemento = document.getElementById("detalhes");
-            if (!detalhesElemento) return;
 
-            document.getElementById("detalhesTitulo").innerHTML = `${data.predio} - Sala ${data.sala} (${data.curso})`;
-            document.getElementById("detalhesDescricao").innerHTML = `Disciplina: ${data.disciplina}<br>Docente: ${data.docente}<br>Horário: ${data.horario}`;
-            
-            const coordenadas = coordenadasLocais[data.predio] || coordenadasLocais["Prédio 1"];
-            
-            const mapa = document.getElementById("detalhesMapa");
-            mapa.innerHTML = "<div id='map' style='width: 100%; height: 400px;'></div>";
-            
-            setTimeout(() => {
-                const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(map);
+       function exibirDetalhes(data) {
+    const modal = document.getElementById("modalMapa");
+    const modalTitulo = document.getElementById("modalTitulo");
+    const mapContainer = document.getElementById("mapContainer");
 
-                const destinoMarker = L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
-                    .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
+    // Definir título do modal
+    modalTitulo.innerHTML = `${data.predio} - Sala ${data.sala} (${data.curso})`;
 
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        L.marker([latitude, longitude]).addTo(map)
-                            .bindPopup("Você está aqui").openPopup();
+    // Limpar conteúdo do mapa para evitar sobreposição
+    mapContainer.innerHTML = "<div id='map' class='w-full h-96'></div>";
 
-                        L.polyline([
-                            [latitude, longitude],
-                            [coordenadas.latitude, coordenadas.longitude]
-                        ], { color: 'blue' }).addTo(map);
-                    },
-                    () => {
-                        alert("Não foi possível obter sua localização.");
-                    }
-                );
-            }, 200);
+    // Exibir o modal
+    modal.classList.remove("hidden");
 
-            detalhesElemento.style.display = "block";
-        }
+    // Definir coordenadas do prédio
+    const coordenadas = coordenadasLocais[data.predio] || coordenadasLocais["Prédio 1"];
+
+    setTimeout(() => {
+        const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
+            .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                L.marker([latitude, longitude]).addTo(map)
+                    .bindPopup("Você está aqui").openPopup();
+
+                L.polyline([
+                    [latitude, longitude],
+                    [coordenadas.latitude, coordenadas.longitude]
+                ], { color: 'blue' }).addTo(map);
+            },
+            () => {
+                alert("Não foi possível obter sua localização.");
+            }
+        );
+    }, 200);
+}
+
 
         document.addEventListener("DOMContentLoaded", function () {
     const mapaInicialDiv = document.getElementById("mapaInicial");
@@ -126,7 +135,7 @@
                     const item = document.createElement("li");
                     item.className = "border-b p-2 cursor-pointer";
                     item.innerHTML = `
-                        <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
+                      <strong>${data.predio} - ${data.andar} - Sala ${data.sala}</strong><br>
                         <span>${data.curso} | ${data.disciplina}</span><br>
                         <small>${data.docente} - ${data.horario}</small>
                     `;
@@ -158,5 +167,14 @@
         <p id="detalhesDescricao"></p>
         <div id="detalhesMapa"></div>
     </div>
+    <!-- Modal para o mapa -->
+<div id="modalMapa" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+    <div class="bg-white w-11/12 md:w-3/4 lg:w-1/2 p-6 rounded-lg shadow-lg relative">
+        <button id="fecharModal" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg">X</button>
+        <h2 class="text-xl font-bold mb-4" id="modalTitulo"></h2>
+        <div id="mapContainer" class="w-full h-96"></div>
+    </div>
+</div>
+
 </body>
 </html>
