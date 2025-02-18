@@ -144,23 +144,41 @@ document.addEventListener("DOMContentLoaded", function () {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
-        async function pesquisar() {
+  async function pesquisar() {
     const queryTermo = document.getElementById("pesquisa").value.trim();
     if (queryTermo === "") return alert("Digite um termo de pesquisa!");
 
     const lista = document.getElementById("listaRegistros");
     lista.innerHTML = "";
-    
+
+    // Lista de prédios fixos
+    const prediosFixos = {
+        "prédio 1": { nome: "Prédio 1", latitude: -23.214433158266555, longitude: -46.89146281675962 },
+        "prédio 2": { nome: "Prédio 2", latitude: -23.21330932218799, longitude: -46.89255711603703 },
+        "prédio 3": { nome: "Prédio 3", latitude: -23.21381689404497, longitude: -46.892696577592055 }
+    };
+
+    // Normalizar termo de busca (remover acentos e transformar para minúsculas)
+    const termoNormalizado = removerAcentos(queryTermo);
+
+    // Verificar se a pesquisa corresponde a um prédio fixo
+    if (prediosFixos[termoNormalizado]) {
+        const predio = prediosFixos[termoNormalizado];
+        const item = document.createElement("li");
+        item.className = "border-b p-2 cursor-pointer font-bold bg-gray-200";
+        item.innerHTML = `<strong>${predio.nome}</strong> - Clique para ver no mapa`;
+        item.onclick = function() {
+            exibirMapa(predio.latitude, predio.longitude, predio.nome);
+        };
+        lista.appendChild(item);
+    }
+
+    // Buscar dados no Firebase
     const snapshot = await getDocs(collection(db, "salas"));
     let resultados = [];
 
-    // Normalizar termo de busca
-    const termoNormalizado = removerAcentos(queryTermo);
-
     snapshot.forEach(doc => {
         const data = doc.data();
-        
-        // Normalizar palavras-chave do banco de dados
         const keywordsNormalizadas = data.keywords.map(k => removerAcentos(k));
 
         if (keywordsNormalizadas.some(keyword => keyword.includes(termoNormalizado))) {
@@ -168,6 +186,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    // Exibir os resultados do Firebase abaixo dos prédios fixos
     if (resultados.length > 0) {
         resultados.forEach(data => {
             const item = document.createElement("li");
@@ -182,11 +201,40 @@ document.addEventListener("DOMContentLoaded", function () {
             };
             lista.appendChild(item);
         });
-    } else {
+    } else if (!prediosFixos[termoNormalizado]) {
         lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
     }
+
     lista.style.display = "block";
 }
+
+// Função para exibir o prédio no mapa
+function exibirMapa(latitude, longitude, nome) {
+    const modal = document.getElementById("modalMapa");
+    const modalTitulo = document.getElementById("modalTitulo");
+    const mapContainer = document.getElementById("mapContainer");
+
+    // Definir título do modal
+    modalTitulo.innerHTML = nome;
+
+    // Limpar conteúdo do mapa para evitar sobreposição
+    mapContainer.innerHTML = "<div id='map' class='w-full h-96'></div>";
+
+    // Exibir o modal
+    modal.classList.remove("hidden");
+
+    setTimeout(() => {
+        const map = L.map('map').setView([latitude, longitude], 17);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        L.marker([latitude, longitude]).addTo(map)
+            .bindPopup(nome).openPopup();
+    }, 200);
+}
+
 
 
         window.pesquisar = pesquisar;
