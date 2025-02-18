@@ -72,100 +72,190 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+   <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "API_KEY",
-            authDomain: "unianchieta-a83bd.firebaseapp.com",
-            databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
-            projectId: "unianchieta-a83bd",
-            storageBucket: "unianchieta-a83bd.firebasestorage.app",
-            messagingSenderId: "566413683292",
-            appId: "1:566413683292:web:0b274aaf669269c7041499",
-            measurementId: "G-G8DGTH92FJ"
-        };
+    const firebaseConfig = {
+        apiKey: "API_KEY",
+        authDomain: "unianchieta-a83bd.firebaseapp.com",
+        databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
+        projectId: "unianchieta-a83bd",
+        storageBucket: "unianchieta-a83bd.firebasestorage.app",
+        messagingSenderId: "566413683292",
+        appId: "1:566413683292:web:0b274aaf669269c7041499",
+        measurementId: "G-G8DGTH92FJ"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        const coordenadasLocais = {
-            "Prédio 1": { latitude: -23.214433, longitude: -46.891462 },
-            "Prédio 2": { latitude: -23.213309, longitude: -46.892557 },
-            "Prédio 3": { latitude: -23.213816, longitude: -46.892696 }
-        };
+    const coordenadasLocais = {
+        "Prédio 1": { latitude: -23.214433, longitude: -46.891462 },
+        "Prédio 2": { latitude: -23.213309, longitude: -46.892557 },
+        "Prédio 3": { latitude: -23.213816, longitude: -46.892696 }
+    };
 
-        // Criar mapa inicial ao carregar a página
-        document.addEventListener("DOMContentLoaded", function () {
-            const mapaInicialDiv = document.getElementById("mapaInicial");
+    // Criar mapa inicial ao carregar a página
+    document.addEventListener("DOMContentLoaded", function () {
+        const mapaInicialDiv = document.getElementById("mapaInicial");
 
-            setTimeout(() => {
-                const map = L.map(mapaInicialDiv).setView([-23.214, -46.892], 15);
-                
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(map);
+        setTimeout(() => {
+            const map = L.map(mapaInicialDiv).setView([-23.214, -46.892], 15);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
 
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        map.setView([latitude, longitude], 17);
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    map.setView([latitude, longitude], 17);
 
-                        L.marker([latitude, longitude]).addTo(map)
-                            .bindPopup("Você está aqui").openPopup();
-                    },
-                    () => {
-                        alert("Não foi possível obter sua localização.");
-                    }
-                );
-            }, 500);
-        });
-
-        // Fechar modal
-        document.getElementById("fecharModal").addEventListener("click", function () {
-            document.getElementById("modalMapa").classList.add("hidden");
-        });
-
-        // Função para remover acentos
-        function removerAcentos(texto) {
-            return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-        }
-
-        async function pesquisar() {
-            let queryTermo = document.getElementById("pesquisa").value.trim();
-            if (queryTermo === "") return alert("Digite um termo de pesquisa!");
-
-            queryTermo = removerAcentos(queryTermo);
-
-            const lista = document.getElementById("listaRegistros");
-            lista.innerHTML = "";
-
-            let resultados = [];
-
-            for (let predio in coordenadasLocais) {
-                if (removerAcentos(predio) === queryTermo) {
-                    resultados.push({ predio, sala: "N/A", curso: "Localização" });
-                    break;
+                    L.marker([latitude, longitude]).addTo(map)
+                        .bindPopup("Você está aqui").openPopup();
+                },
+                () => {
+                    alert("Não foi possível obter sua localização.");
                 }
+            );
+        }, 500);
+    });
+
+    // Fechar modal
+    document.getElementById("fecharModal").addEventListener("click", function () {
+        document.getElementById("modalMapa").classList.add("hidden");
+    });
+
+    // Função para remover acentos
+    function removerAcentos(texto) {
+        return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    }
+
+    async function pesquisar() {
+        let queryTermo = document.getElementById("pesquisa").value.trim();
+        if (queryTermo === "") return alert("Digite um termo de pesquisa!");
+
+        queryTermo = removerAcentos(queryTermo);
+
+        const lista = document.getElementById("listaRegistros");
+        lista.innerHTML = "";
+        lista.style.display = "block";
+
+        let resultados = [];
+
+        // Verificar se a pesquisa é um prédio
+        for (let predio in coordenadasLocais) {
+            if (removerAcentos(predio) === queryTermo) {
+                resultados.push({
+                    predio,
+                    sala: "N/A",
+                    curso: "Localização",
+                    disciplina: "N/A",
+                    docente: "N/A",
+                    horario: "N/A"
+                });
+                break;
             }
-
-            const snapshot = await getDocs(collection(db, "salas"));
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.keywords.some(keyword => removerAcentos(keyword).includes(queryTermo))) {
-                    resultados.push(data);
-                }
-            });
-
-            lista.innerHTML = resultados.length > 0
-                ? resultados.map(data => `<li>${data.predio} - ${data.sala || "N/A"}</li>`).join("")
-                : "<li>Nenhum resultado encontrado</li>";
-
-            lista.style.display = "block";
         }
 
-        window.pesquisar = pesquisar;
-    </script>
+        // Buscar salas no Firestore
+        const snapshot = await getDocs(collection(db, "salas"));
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.keywords.some(keyword => removerAcentos(keyword).includes(queryTermo))) {
+                resultados.push(data);
+            }
+        });
+
+        if (resultados.length > 0) {
+            lista.innerHTML = "";
+            resultados.forEach(data => {
+                const item = document.createElement("li");
+                item.className = "border-b p-2 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-lg p-3";
+                item.innerHTML = `
+                    <strong>${data.predio} - ${data.sala !== "N/A" ? `Sala ${data.sala}` : ""}</strong><br>
+                    <span>${data.curso !== "N/A" ? data.curso : ""}</span><br>
+                    <small>${data.docente !== "N/A" ? data.docente + " - " + data.horario : ""}</small>
+                `;
+                item.onclick = function () {
+                    exibirDetalhes(data);
+                };
+                lista.appendChild(item);
+            });
+        } else {
+            lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
+        }
+    }
+
+    function exibirDetalhes(data) {
+        const modal = document.getElementById("modalMapa");
+        const modalTitulo = document.getElementById("modalTitulo");
+        const mapContainer = document.getElementById("mapContainer");
+
+        modalTitulo.innerHTML = `${data.predio} - Sala ${data.sala} (${data.curso})`;
+
+        mapContainer.innerHTML = "<div id='map' class='w-full h-96'></div>";
+
+        modal.classList.remove("hidden");
+
+        const predioSemAcento = removerAcentos(data.predio);
+
+        let coordenadas = null;
+        for (let key in coordenadasLocais) {
+            if (removerAcentos(key) === predioSemAcento) {
+                coordenadas = coordenadasLocais[key];
+                break;
+            }
+        }
+
+        if (!coordenadas) {
+            alert(`Erro: Coordenadas do prédio "${data.predio}" não encontradas!`);
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+
+                const diferencaLat = Math.abs(latitude - coordenadas.latitude);
+                const diferencaLng = Math.abs(longitude - coordenadas.longitude);
+
+                const limiteProximidade = 0.00027;
+
+                if (diferencaLat < limiteProximidade && diferencaLng < limiteProximidade) {
+                    alert(`Você já está no ${data.predio}!\n\nSala: ${data.sala}\nCurso: ${data.curso}\nDisciplina: ${data.disciplina}\nDocente: ${data.docente}\nHorário: ${data.horario}`);
+                    return;
+                }
+
+                setTimeout(() => {
+                    const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 15);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(map);
+
+                    L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
+                        .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
+
+                    L.marker([latitude, longitude]).addTo(map)
+                        .bindPopup("Você está aqui").openPopup();
+
+                    L.polyline([
+                        [latitude, longitude],
+                        [coordenadas.latitude, coordenadas.longitude]
+                    ], { color: 'blue' }).addTo(map);
+                }, 200);
+            },
+            () => {
+                alert("Não foi possível obter sua localização.");
+            }
+        );
+    }
+
+    window.pesquisar = pesquisar;
+</script>
+
 </body>
 </html>
