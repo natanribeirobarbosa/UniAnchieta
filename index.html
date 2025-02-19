@@ -49,7 +49,8 @@
 });
 
 
- let userMarker = null; // Variável global para armazenar o marcador do usuário
+ let userMarker = null; // Armazena o marcador do usuário
+let userRoute = null;  // Armazena a linha da rota do usuário
 
 function exibirDetalhes(data) {
     const modal = document.getElementById("modalMapa");
@@ -93,25 +94,25 @@ function exibirDetalhes(data) {
             (position) => {
                 const { latitude, longitude } = position.coords;
 
-                // Remove o marcador anterior antes de adicionar um novo
+                // Se o marcador do usuário já existe, apenas atualiza a posição
                 if (userMarker) {
-                    map.removeLayer(userMarker);
+                    userMarker.setLatLng([latitude, longitude]);
+                } else {
+                    // Se não existir, cria um novo marcador
+                    userMarker = L.marker([latitude, longitude]).addTo(map)
+                        .bindPopup("Você está aqui").openPopup();
                 }
 
-                // Adiciona um novo marcador na posição atual do usuário
-                userMarker = L.marker([latitude, longitude]).addTo(map)
-                    .bindPopup("Você está aqui").openPopup();
-
-                // Remove a linha da rota anterior antes de adicionar uma nova
-                if (window.userRoute) {
-                    map.removeLayer(window.userRoute);
+                // Atualiza a rota sem recriar
+                if (userRoute) {
+                    userRoute.setLatLngs([[latitude, longitude], [coordenadas.latitude, coordenadas.longitude]]);
+                } else {
+                    // Se não existir uma rota, cria uma nova
+                    userRoute = L.polyline([
+                        [latitude, longitude],
+                        [coordenadas.latitude, coordenadas.longitude]
+                    ], { color: 'blue' }).addTo(map);
                 }
-
-                // Traçar a rota do usuário até o prédio selecionado
-                window.userRoute = L.polyline([
-                    [latitude, longitude],
-                    [coordenadas.latitude, coordenadas.longitude]
-                ], { color: 'blue' }).addTo(map);
 
                 // Verificar se o usuário chegou ao destino
                 if (calcularDistancia(latitude, longitude, coordenadas.latitude, coordenadas.longitude) < 10) {
