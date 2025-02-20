@@ -4,25 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pesquisa de Localização - UniAnchieta</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         html, body {
-            overflow: hidden; /* Evita rolagem da tela */
-            transition: background 0.3s, color 0.3s;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
         }
         .dark-mode {
-            background: #121212;
-            color: white;
+            background-color: #1a202c;
+            color: #cbd5e0;
+        }
+        .dark-mode .bg-white {
+            background-color: #2d3748 !important;
+        }
+        .dark-mode .text-black {
+            color: #cbd5e0 !important;
         }
     </style>
 </head>
 <body class="flex flex-col items-center bg-gray-100 h-screen p-6">
-    <button id="toggleDarkMode" class="absolute top-4 right-4 bg-gray-800 text-white px-4 py-2 rounded">Modo Escuro</button>
-    <h1 class="text-2xl font-bold mb-4">Pesquisa de Localização - UniAnchieta</h1>
+    <div class="w-full max-w-2xl flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Pesquisa de Localização - UniAnchieta</h1>
+        <button id="toggleDarkMode" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-600">Modo Escuro</button>
+    </div>
+    
     <div id="mapaInicial" class="w-full max-w-2xl h-96 mt-6 shadow-md rounded"></div>
+    
+    <div class="flex w-full max-w-md space-x-2">
+        <input type="text" id="pesquisa" class="border flex-1 p-2 rounded" placeholder="Pesquise por palavras-chave...">
+        <button onclick="pesquisar()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">Pesquisar</button>
+    </div>
+    
+    <ul id="listaRegistros" class="mt-3 w-full max-w-md bg-white p-4 shadow-md rounded" style="display:none; max-height: 200px; overflow: scroll;"></ul>
+    
+    <div id="modalMapa" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+        <div class="bg-white w-11/12 md:w-3/4 lg:w-1/2 p-6 rounded-lg shadow-lg relative">
+            <button id="fecharModal" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg">X</button>
+            <h2 class="text-xl font-bold mb-4" id="modalTitulo"></h2>
+            <div id="mapContainer" class="w-full h-96"></div>
+        </div>
+    </div>
+    
     <script>
         document.getElementById("toggleDarkMode").addEventListener("click", function () {
             document.body.classList.toggle("dark-mode");
-            this.textContent = document.body.classList.contains("dark-mode") ? "Modo Claro" : "Modo Escuro";
         });
     </script>
 </body>
