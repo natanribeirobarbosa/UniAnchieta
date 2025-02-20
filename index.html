@@ -34,11 +34,11 @@
 
         // Coordenadas atualizadas para os prédios
        const coordenadasLocais = {
-            "Predio 1": { latitude: -23.214433158266555, longitude: -46.89146281675962 },
-            "Predio 2": { latitude: -23.21330, longitude: -46.89255711603703 },
-            "Predio 3": { latitude: -23.21381689404497, longitude: -46.892696577592055 },
-            "Predio 4": { latitude: -23.21494, longitude: -46.89306},
-            "ambulatorio": { latitude: -23.21332, longitude: -46.89286}
+          "predio 1": { nome: "Prédio 1", latitude: -23.214433158266555, longitude: -46.89146281675962 },
+        "predio 2": { nome: "Prédio 2", latitude: -23.21330932218799, longitude: -46.89255711603703 },
+        "predio 3": { nome: "Prédio 3", latitude: -23.21381689404497, longitude: -46.892696577592055 },
+        "predio 4": { nome: "Prédio 4", latitude: -23.21494, longitude: -46.89306 },
+        "ambulatorio": { nome: "ambulatório", latitude: -23.21332, longitude: -46.89286}
         };
         document.getElementById("fecharModal").addEventListener("click", function () {
     document.getElementById("modalMapa").classList.add("hidden");
@@ -197,18 +197,19 @@ function removerAcentos(str) {
 // Função para corrigir pesquisas erradas
 function corrigirPesquisa(termo) {
     const correcoes = {
-        "predio1": "prédio 1",
-        "predio4": "prédio 4",
-        "predio 1": "prédio 1",
-        "predio 4": "prédio 4",
-        "predio2": "prédio 2",
-        "predio 2": "prédio 2",
-        "predio3": "prédio 3",
-        "predio 3": "prédio 3",
-        "predi 1": "prédio 1",
-        "predi 4": "prédio 4",
-        "predi 2": "prédio 2",
-        "predi 3": "prédio 3"
+        "predio1": "predio 1",
+        "predio4": "predio 4",
+        "predio2": "predio 2",
+        "predio3": "predio 3",
+        "predi 1": "predio 1",
+        "predi 4": "predio 4",
+        "predi 2": "predio 2",
+        "predi 3": "predio 3",
+        "prédio 1": "predio 1",
+        "prédio 2": "predio 2",
+        "prédio 3": "predio 3",
+        "prédio 4": "predio 4",
+        "ambulatório": "ambulatorio"
     };
 
     const termoNormalizado = removerAcentos(termo);
@@ -224,19 +225,10 @@ async function pesquisar() {
     const lista = document.getElementById("listaRegistros");
     lista.innerHTML = "";
 
-    // Lista de prédios fixos
-    const prediosFixos = {
-        "prédio 1": { nome: "Prédio 1", latitude: -23.214433158266555, longitude: -46.89146281675962 },
-        "prédio 2": { nome: "Prédio 2", latitude: -23.21330932218799, longitude: -46.89255711603703 },
-        "prédio 3": { nome: "Prédio 3", latitude: -23.21381689404497, longitude: -46.892696577592055 },
-        "prédio 4": { nome: "Prédio 4", latitude: -23.21494, longitude: -46.89306 },
-        "ambulatório": { nome: "ambulatório", latitude: -23.21332, longitude: -46.89286}
-    };
-
     // Verificar se a pesquisa corresponde a um prédio fixo
     const termoNormalizado = removerAcentos(queryTermo);
-    if (Object.keys(prediosFixos).some(predio => removerAcentos(predio) === termoNormalizado)) {
-        const predio = prediosFixos[queryTermo.toLowerCase()];
+    if (Object.keys(coordenadasLocais).some(predio => removerAcentos(predio) === termoNormalizado)) {
+        const predio = coordenadasLocais[queryTermo.toLowerCase()];
         const item = document.createElement("li");
         item.className = "border-b p-2 cursor-pointer font-bold bg-gray-200";
         item.innerHTML = `<strong>${predio.nome}</strong> - Clique para ver no mapa`;
@@ -274,7 +266,7 @@ async function pesquisar() {
             };
             lista.appendChild(item);
         });
-    } else if (!prediosFixos[queryTermo.toLowerCase()]) {
+    } else if (!coordenadasLocais[queryTermo.toLowerCase()]) {
         lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
     }
 
