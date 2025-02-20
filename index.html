@@ -4,51 +4,379 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pesquisa de Localização - UniAnchieta</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         html, body {
-            overflow: hidden;
-            transition: background-color 0.3s, color 0.3s;
+            overflow: hidden; /* Evita rolagem da tela */
+            transition: background 0.3s, color 0.3s;
         }
         .dark-mode {
-            background-color: #1a202c;
-            color: #cbd5e0;
+            background-color: #121212;
+            color: white;
         }
         .dark-mode .bg-white {
-            background-color: #2d3748 !important;
+            background-color: #1e1e1e;
         }
         .dark-mode .text-black {
-            color: #cbd5e0 !important;
+            color: white;
         }
     </style>
+    
+    <!-- Adicionando Leaflet CSS e JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmsaehyPzmtmJr5Tvl0snt5wgsnnxw8Ps",
+            authDomain: "unianchieta-a83bd.firebaseapp.com",
+            databaseURL: "https://unianchieta-a83bd-default-rtdb.firebaseio.com",
+            projectId: "unianchieta-a83bd",
+            storageBucket: "unianchieta-a83bd.firebasestorage.app",
+            messagingSenderId: "566413683292",
+            appId: "1:566413683292:web:0b274aaf669269c7041499",
+            measurementId: "G-G8DGTH92FJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Coordenadas atualizadas para os prédios
+       const coordenadasLocais = {
+          "predio 1": { nome: "Prédio 1", latitude: -23.214433158266555, longitude: -46.89146281675962 },
+        "predio 2": { nome: "Prédio 2", latitude: -23.21330932218799, longitude: -46.89255711603703 },
+        "predio 3": { nome: "Prédio 3", latitude: -23.21381689404497, longitude: -46.892696577592055 },
+        "predio 4": { nome: "Prédio 4", latitude: -23.21494, longitude: -46.89306 },
+        "ambulatorio": { nome: "ambulatório", latitude: -23.21332, longitude: -46.89286}
+        };
+              window.toggleDarkMode = function () {
+            document.body.classList.toggle("dark-mode");
+        };
+        document.getElementById("fecharModal").addEventListener("click", function () {
+    document.getElementById("modalMapa").classList.add("hidden");
+
+            
+});
+
+
+ let userMarker = null; // Armazena o marcador do usuário
+let userRoute = null;  // Armazena a linha da rota do usuário
+
+function exibirDetalhes(data) {
+    const modal = document.getElementById("modalMapa");
+    const modalTitulo = document.getElementById("modalTitulo");
+    const mapContainer = document.getElementById("mapContainer");
+
+    // Definir título do modal
+    modalTitulo.innerHTML = `Vá para o ${data.predio}, andar ${data.andar} e Sala ${data.sala}`;
+
+    // Limpar conteúdo do mapa para evitar sobreposição
+    mapContainer.innerHTML = "<div id='map' class='w-full h-96'></div>";
+
+    // Exibir o modal
+    modal.classList.remove("hidden");
+
+    // Normalizar nome do prédio (removendo espaços extras e padronizando letras)
+    const predioFormatado = data.predio.trim();
+
+    // Buscar coordenadas do prédio correto
+    const coordenadas = coordenadasLocais[predioFormatado];
+
+    // Se não encontrar, exibir erro e não continuar
+    if (!coordenadas) {
+        console.error(`Erro: Coordenadas do prédio '${predioFormatado}' não encontradas!`);
+        alert(`Erro: Coordenadas do prédio '${predioFormatado}' não encontradas!`);
+        return;
+    }
+
+    setTimeout(() => {
+        const map = L.map('map').setView([coordenadas.latitude, coordenadas.longitude], 17);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Marcador do destino (prédio selecionado)
+        L.marker([coordenadas.latitude, coordenadas.longitude]).addTo(map)
+            .bindPopup(`${data.predio} - Sala ${data.sala}`).openPopup();
+
+        navigator.geolocation.watchPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+
+                // Se o marcador do usuário já existe, apenas atualiza a posição
+                if (userMarker) {
+                    userMarker.setLatLng([latitude, longitude]);
+                } else {
+                    // Se não existir, cria um novo marcador
+                    userMarker = L.marker([latitude, longitude]).addTo(map)
+                        .bindPopup("Você está aqui").openPopup();
+                }
+
+                // Atualiza a rota sem recriar
+                if (userRoute) {
+                    userRoute.setLatLngs([[latitude, longitude], [coordenadas.latitude, coordenadas.longitude]]);
+                } else {
+                    // Se não existir uma rota, cria uma nova
+                    userRoute = L.polyline([
+                        [latitude, longitude],
+                        [coordenadas.latitude, coordenadas.longitude]
+                    ], { color: 'blue' }).addTo(map);
+                }
+
+                // Verificar se o usuário chegou ao destino
+                if (calcularDistancia(latitude, longitude, coordenadas.latitude, coordenadas.longitude) < 10) {
+                    alert("Parabéns! Você chegou ao destino! 🎉");
+                }
+            },
+            () => {
+                alert("Não foi possível obter sua localização.");
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            }
+        );
+    }, 200);
+}
+
+
+// Função para calcular a distância entre dois pontos (em metros)
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // Raio da Terra em metros
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distância em metros
+}
+
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const mapaInicialDiv = document.getElementById("mapaInicial");
+
+    // Criar o mapa com uma posição inicial genérica (UniAnchieta)
+    const map = L.map(mapaInicialDiv).setView([-23.214, -46.892], 15);
+    
+    // Adicionar camada do OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Adicionar marcador temporário até que a localização real seja carregada
+    let userMarker = L.marker([-23.214, -46.892], { draggable: false })
+        .addTo(map)
+        .bindPopup("Localização padrão... tentando encontrar sua posição real.")
+        .openPopup();
+
+    // Tentar obter a localização real do usuário
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
+
+            // Atualizar o mapa para a posição real do usuário
+            map.setView([latitude, longitude], 17);
+
+            // Atualizar o marcador com a posição real
+            userMarker.setLatLng([latitude, longitude])
+                .bindPopup("Você está aqui!").openPopup();
+        },
+        (error) => {
+            console.error("Erro ao obter localização:", error);
+            alert("Não foi possível obter sua localização precisa. Verifique as permissões e o GPS.");
+        },
+        {
+            enableHighAccuracy: true, // Maior precisão ativada
+            timeout: 5000, // Tempo limite reduzido para 5 segundos
+            maximumAge: 1000 // Usa posição recente, se disponível (1s)
+        }
+    );
+});
+
+
+// Função para remover acentos e padronizar texto
+function removerAcentos(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+// Função para corrigir pesquisas erradas
+function corrigirPesquisa(termo) {
+    const correcoes = {
+        "predio1": "predio 1",
+        "predio4": "predio 4",
+        "predio2": "predio 2",
+        "predio3": "predio 3",
+        "predi 1": "predio 1",
+        "predi 4": "predio 4",
+        "predi 2": "predio 2",
+        "predi 3": "predio 3",
+        "prédio 1": "predio 1",
+        "prédio 2": "predio 2",
+        "prédio 3": "predio 3",
+        "prédio 4": "predio 4",
+        "ambulatório": "ambulatorio"
+    };
+
+    const termoNormalizado = removerAcentos(termo);
+    return correcoes[termoNormalizado] || termo;
+}
+
+async function pesquisar() {
+    let queryTermo = document.getElementById("pesquisa").value.trim();
+    if (queryTermo === "") return alert("Digite um termo de pesquisa!");
+
+    queryTermo = corrigirPesquisa(queryTermo); // Corrigir pesquisa antes de processar
+
+    const lista = document.getElementById("listaRegistros");
+    lista.innerHTML = "";
+
+    // Verificar se a pesquisa corresponde a um prédio fixo
+    const termoNormalizado = removerAcentos(queryTermo);
+    if (Object.keys(coordenadasLocais).some(predio => removerAcentos(predio) === termoNormalizado)) {
+        const predio = coordenadasLocais[queryTermo.toLowerCase()];
+        const item = document.createElement("li");
+        item.className = "border-b p-2 cursor-pointer font-bold bg-gray-200";
+        item.innerHTML = `<strong>${predio.nome}</strong> - Clique para ver no mapa`;
+        item.onclick = function() {
+            exibirMapaComRota(predio.latitude, predio.longitude, predio.nome);
+        };
+        lista.appendChild(item);
+    }
+
+    // Buscar dados no Firebase
+    const snapshot = await getDocs(collection(db, "salas"));
+    let resultados = [];
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const keywordsNormalizadas = data.keywords.map(k => removerAcentos(k));
+
+        if (keywordsNormalizadas.some(keyword => keyword.includes(removerAcentos(queryTermo)))) {
+            resultados.push(data);
+        }
+    });
+
+    // Exibir os resultados do Firebase abaixo dos prédios fixos
+    if (resultados.length > 0) {
+        resultados.forEach(data => {
+            const item = document.createElement("li");
+            item.className = "border-b p-2 cursor-pointer";
+            item.innerHTML = `
+                <strong>${data.predio} - ${data.andar}º andar - Sala ${data.sala}</strong><br>
+                <span>${data.curso} | ${data.disciplina}</span><br>
+                <small>${data.docente} - ${data.diaSemana} ${data.horario}</small>
+            `;
+            item.onclick = function() {
+                exibirDetalhes(data);
+            };
+            lista.appendChild(item);
+        });
+    } else if (!coordenadasLocais[queryTermo.toLowerCase()]) {
+        lista.innerHTML = "<li class='p-2 text-red-500'>Nenhum resultado encontrado</li>";
+    }
+
+    lista.style.display = "block";
+}
+
+// Função para exibir o prédio no mapa e traçar a rota do usuário até ele
+function exibirMapaComRota(destLatitude, destLongitude, nome) {
+    const modal = document.getElementById("modalMapa");
+    const modalTitulo = document.getElementById("modalTitulo");
+    const mapContainer = document.getElementById("mapContainer");
+
+    // Definir título do modal
+    modalTitulo.innerHTML = nome;
+
+    // Limpar conteúdo do mapa para evitar sobreposição
+    mapContainer.innerHTML = "<div id='map' class='w-full h-96'></div>";
+
+    // Exibir o modal
+    modal.classList.remove("hidden");
+
+    setTimeout(() => {
+        const map = L.map('map').setView([destLatitude, destLongitude], 17);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Marcador do prédio selecionado
+        L.marker([destLatitude, destLongitude]).addTo(map)
+            .bindPopup(nome).openPopup();
+
+        // Tentar obter a localização do usuário
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+
+                // Adicionar um marcador para a localização do usuário
+                L.marker([latitude, longitude], { icon: L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/64/684/684908.png', iconSize: [30, 30] }) })
+                    .addTo(map)
+                    .bindPopup("Você está aqui").openPopup();
+
+                // Traçar rota do usuário até o prédio
+                L.polyline([
+                    [latitude, longitude],
+                    [destLatitude, destLongitude]
+                ], { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+            },
+            (error) => {
+                console.error("Erro ao obter localização:", error);
+                alert("Não foi possível obter sua localização. Verifique as permissões do GPS.");
+            },
+            {
+                enableHighAccuracy: true, // Maior precisão ativada
+                timeout: 5000, // Tempo limite reduzido para 5 segundos
+                maximumAge: 1000 // Usa posição recente, se disponível (1s)
+            }
+        );
+    }, 200);
+}
+
+
+
+        window.pesquisar = pesquisar;
+    </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="flex flex-col items-center bg-gray-100 h-screen p-6">
-    <div class="w-full max-w-2xl flex justify-between items-center">
-        <h1 class="text-2xl font-bold">Pesquisa de Localização - UniAnchieta</h1>
-        <button id="toggleDarkMode" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-600">Modo Escuro</button>
+     <h1 class="text-2xl font-bold mb-4">Pesquisa de Localização - UniAnchieta</h1>
+    <div id="mapaInicial" class="w-full max-w-2xl h-96 mt-6 shadow-md rounded" style="position: sticky; margin-bottom: 20px;
+    height: 300px;"></div>
+
+   
+   <div class="flex w-full max-w-md space-x-2">
+    <input type="text" id="pesquisa" class="border flex-1 p-2 rounded" placeholder="Pesquise por palavras-chave...">
+    <button onclick="pesquisar()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">Pesquisar</button>
+</div>
+
+    <ul id="listaRegistros" class="mt-3 w-full max-w-md bg-white p-4 shadow-md rounded" style="display:none;max-height: 200px;
+    overflow: scroll;"></ul>
+    <div id="detalhes" class="mt-6 p-4 bg-white shadow-md rounded" style="display:none;">
+        <h2 id="detalhesTitulo" class="text-xl font-bold"></h2>
+        <p id="detalhesDescricao"></p>
+        <div id="detalhesMapa"></div>
     </div>
-    
-    <div id="mapaInicial" class="w-full max-w-2xl h-96 mt-6 shadow-md rounded"></div>
-    
-    <div class="flex w-full max-w-md space-x-2">
-        <input type="text" id="pesquisa" class="border flex-1 p-2 rounded" placeholder="Pesquise por palavras-chave...">
-        <button onclick="pesquisar()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">Pesquisar</button>
+    <!-- Modal para o mapa -->
+<div id="modalMapa" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+    <div class="bg-white w-11/12 md:w-3/4 lg:w-1/2 p-6 rounded-lg shadow-lg relative">
+        <button id="fecharModal" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg">X</button>
+        <h2 class="text-xl font-bold mb-4" id="modalTitulo" style="margin-top: 20px;"></h2>
+        <div id="mapContainer" class="w-full h-96"></div>
     </div>
-    
-    <ul id="listaRegistros" class="mt-3 w-full max-w-md bg-white p-4 shadow-md rounded" style="display:none; max-height: 200px; overflow: scroll;"></ul>
-    
-    <div id="modalMapa" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
-        <div class="bg-white w-11/12 md:w-3/4 lg:w-1/2 p-6 rounded-lg shadow-lg relative">
-            <button id="fecharModal" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg">X</button>
-            <h2 class="text-xl font-bold mb-4" id="modalTitulo"></h2>
-            <div id="mapContainer" class="w-full h-96"></div>
-        </div>
-    </div>
-    
-    <script>
-        document.getElementById("toggleDarkMode").addEventListener("click", function () {
-            document.body.classList.toggle("dark-mode");
-        });
-    </script>
+</div>
+
 </body>
 </html>
