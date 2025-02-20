@@ -16,8 +16,8 @@
 }
         
         body.dark-mode {
-            transition: 500ms;
-    background-color: #565656 !important;
+            transition: 600ms;
+    background-color: #212121 !important;
     color: white !important;
 }
         .dark-mode .bg-white {
@@ -63,11 +63,11 @@
             document.body.classList.toggle("dark-mode");
                   if(mode){
                       mode = false;
-                      document.getElementById("dark").innerText="🌛";
+                      document.getElementById("dark").innerText="Dark";
                       
                   }else{
                       mode = true;
-                       document.getElementById("dark").innerText="🌞";              
+                       document.getElementById("dark").innerText="Light";              
                   }
         };
         document.getElementById("fecharModal").addEventListener("click", function () {
@@ -369,7 +369,7 @@ function exibirMapaComRota(destLatitude, destLongitude, nome) {
 </head>
 <body class="flex flex-col items-center bg-gray-100 h-screen p-6">
      <button onclick="toggleDarkMode()" id="dark" class="bg-gray-800 text-white px-4 py-2 rounded mb-4" style="position: absolute;
-    right: 10px; border-radius: 30px;">🌛</button>
+    right: 10px; border-radius: 30px;">Light</button>
      <h1 class="text-2xl font-bold mb-4">Pesquisa de Localização - UniAnchieta
 </h1>
     <div id="mapaInicial" class="w-full max-w-2xl h-96 mt-6 shadow-md rounded" style="position: sticky; margin-bottom: 20px;
