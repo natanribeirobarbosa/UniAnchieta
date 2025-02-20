@@ -289,7 +289,7 @@ async function pesquisar() {
             const item = document.createElement("li");
             item.className = "border-b p-2 cursor-pointer";
             item.innerHTML = `
-                <strong>${data.predio} - ${data.andar}º andar - Sala ${data.sala}</strong><br>
+                <strong>${data["predio"].charAt(0).toUpperCase() + data["predio"].slice(1);} - ${data.andar}º andar - Sala ${data.sala}</strong><br>
                 <span>${data.curso} | ${data.disciplina}</span><br>
                 <small>${data.docente} - ${data.diaSemana} ${data.horario}</small>
             `;
