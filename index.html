@@ -9,9 +9,14 @@
             overflow: hidden; /* Evita rolagem da tela */
             transition: background 0.3s, color 0.3s;
             color: black;
-        }
+        },
+        button:active {
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3);
+    transform: translateY(2px);
+}
+        
         body.dark-mode {
-    background-color: #121212 !important;
+    background-color: #565656 !important;
     color: white !important;
 }
         .dark-mode .bg-white {
