@@ -95,7 +95,7 @@ function exibirDetalhes(data) {
     modal.classList.remove("hidden");
 
     // Normalizar nome do prédio (removendo espaços extras e padronizando letras)
-    const predioFormatado = data.predio.trim();
+    const predioFormatado = data.predio.trim().toLowerCase();
 
     // Buscar coordenadas do prédio correto
     const coordenadas = coordenadasLocais[predioFormatado];
