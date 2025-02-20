@@ -16,6 +16,7 @@
 }
         
         body.dark-mode {
+            transition: 300ms;
     background-color: #565656 !important;
     color: white !important;
 }
@@ -57,8 +58,17 @@
         "predio 4": { nome: "Prédio 4", latitude: -23.21494, longitude: -46.89306 },
         "ambulatorio": { nome: "ambulatório", latitude: -23.21332, longitude: -46.89286}
         };
+                mode = false;
               window.toggleDarkMode = function () {
             document.body.classList.toggle("dark-mode");
+                  if(mode){
+                      mode = true;
+                      document.getElementById("dark").innerText("🌛");
+                      
+                  }else{
+                      mode = false;
+                       document.getElementById("dark").innerText("🌞");              
+                  }
         };
         document.getElementById("fecharModal").addEventListener("click", function () {
     document.getElementById("modalMapa").classList.add("hidden");
@@ -358,7 +368,7 @@ function exibirMapaComRota(destLatitude, destLongitude, nome) {
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="flex flex-col items-center bg-gray-100 h-screen p-6">
-     <button onclick="toggleDarkMode()" class="bg-gray-800 text-white px-4 py-2 rounded mb-4" style="position: absolute;
+     <button onclick="toggleDarkMode()" id="dark" class="bg-gray-800 text-white px-4 py-2 rounded mb-4" style="position: absolute;
     right: 10px;">🌛</button>
      <h1 class="text-2xl font-bold mb-4">Pesquisa de Localização - UniAnchieta
 </h1>
