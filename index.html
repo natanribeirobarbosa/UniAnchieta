@@ -203,12 +203,15 @@ function removerAcentos(str) {
 function corrigirPesquisa(termo) {
     const correcoes = {
         "predio1": "prédio 1",
+        "predio4": "prédio 4",
         "predio 1": "prédio 1",
+        "predio 4": "prédio 4",
         "predio2": "prédio 2",
         "predio 2": "prédio 2",
         "predio3": "prédio 3",
         "predio 3": "prédio 3",
         "predi 1": "prédio 1",
+        "predi 4": "prédio 4",
         "predi 2": "prédio 2",
         "predi 3": "prédio 3"
     };
@@ -231,7 +234,8 @@ async function pesquisar() {
         "prédio 1": { nome: "Prédio 1", latitude: -23.214433158266555, longitude: -46.89146281675962 },
         "prédio 2": { nome: "Prédio 2", latitude: -23.21330932218799, longitude: -46.89255711603703 },
         "prédio 3": { nome: "Prédio 3", latitude: -23.21381689404497, longitude: -46.892696577592055 },
-        "prédio 4": { nome: "Prédio 4", latitude: -23.21494, longitude: -46.89306 }
+        "prédio 4": { nome: "Prédio 4", latitude: -23.21494, longitude: -46.89306 },
+        "ambulatório": {}
     };
 
     // Verificar se a pesquisa corresponde a um prédio fixo
